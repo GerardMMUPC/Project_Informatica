@@ -9,3 +9,4 @@ seg2 = Segment('2-3', n2, n3)
 
 print(seg1)
 print(seg2)
+
