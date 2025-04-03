@@ -1,52 +1,55 @@
-# Necessitem els nodes i els segments
-from Node import Node # Importem class Node
-from Segment import Segment # Importem class Segment
+import Node
+from Segment import Segment
 
 class Graph():
     def __init__(self):
-        self.nodes = [] # Llista per guardar nodes
-        self.segments = [] # Llista per guardar segments
+        self.nodes = []
+        self.segments = []
 
     def AddNode (self, n): # self = g
         # Check condition: Node in graph
-            for node in self.nodes:
-                if node.value == n.value: # Si trobem el node a n
+            for Node in self.nodes:
+                if Node.value == n.value:
                     return False
-            else: # Duplicat no trobat
+            else:
                 self.nodes.append(n)
-                return True # Node afegit
+                return True
 
     def AddSegment (self, nameOriginNode, nameDestinationNode):
-        foundOriginNode = False # No hem trobat els nodes encara
+        foundOriginNode = False
         foundDestinationNode = False
 
         origin_node = 0
         destination_node = 0
 
-        # Recorregut de tots els nodes del gràfic:
-        for node in self.nodes:
-            # Trobem el node d'origen
-            if node.name == nameOriginNode:
+        for Node in self.nodes:
+
+            if Node.name == nameOriginNode:
                 foundOriginNode = True
-                origin_node = node # Guardem node d'origen.
-            # Trobem el node de destinació
-            if node.name == nameDestinationNode:
+                origin_node = Node
+
+            if Node.name == nameDestinationNode:
                 foundDestinationNode = True
-                destination_node = node #Guardem node destinació.
-        # Si no els trobem:
+                destination_node = Node
+
         if not foundOriginNode or not foundDestinationNode:
             return False
 
-        # Si trobem ambdós, creem un segment entre ells.
-        segment = Segment(
-            segmentname = f"{origin_node.name}-{destination_node.name}",
-            origin = float(origin_node.name),
-            destination = float(destination_node.name),
+
+        seg = Segment(
+            f"{origin_node.name}-{destination_node.name}",
+            origin_node.name,
+            destination_node.name
         )
 
-        self.segments.append(segment) #Afegim segment a llista de segments
+        self.segments.append(seg)
 
-        #Afegim node destinació a la llista de node d'origen
-        origin_node.add_neighbor(destination_node)
 
-        return True # Segment afegit
+        origin_node.AddNeighbor(destination_node)
+
+        return True
+
+    def GetClosest(self, x, y):
+        for Node in self.nodes:
+            min_cost = min()
+
