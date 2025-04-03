@@ -13,7 +13,6 @@ class Node:
         if n2 not in self.neighbors:
             self.neighbors.append(n2)
             return True
-
         return False
 
     def Distance(self,n1, n2):

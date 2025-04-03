@@ -3,6 +3,7 @@ from Node import *
 from Segment import Segment
 
 class Graph:
+
     def __init__(self):
         self.nodes = []
         self.segments = []

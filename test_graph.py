@@ -2,6 +2,7 @@ from Graph import *
 
 
 def CreateGraph_1():
+
     G = Graph()
 
     G.AddNode(Node("A", 1, 20))
@@ -46,6 +47,7 @@ def CreateGraph_1():
     return G
 
 def CreateGraph_2():
+
     G = Graph()
 
     G.AddNode(Node("JFK", 40.6413, -73.7781))
@@ -63,7 +65,6 @@ def CreateGraph_2():
     G.AddSegment("ATL", "MIA")
 
     return G
-
 
 # Graph 1
 print("Probando el grafo...")
