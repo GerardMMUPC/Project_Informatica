@@ -90,7 +90,6 @@ class Graph:
             y_values = [segment.origin.y, segment.destination.y]
             plt.plot(x_values, y_values, 'gray', linewidth=1)
 
-        # Neighbors en green i segments en red
         for neighbor in origin_node.neighbors:
             plt.scatter(neighbor.x, neighbor.y, color='green', s=80)
             plt.plot([origin_node.x, neighbor.x], [origin_node.y, neighbor.y], 'r-', linewidth=2)
@@ -99,24 +98,20 @@ class Graph:
             mid_x = (origin_node.x + neighbor.x) / 2
             mid_y = (origin_node.y + neighbor.y) / 2
 
-            # Corrected Distance function call
             plt.text(mid_x, mid_y, f"{origin_node.Distance(origin_node, neighbor):.2f}", fontsize=10, ha='center', color='red')
 
-        # Origin node in blue
         plt.scatter(origin_node.x, origin_node.y, color='blue', s=100)
 
-        # Other nodes in gray
         for node in self.nodes:
             if node not in origin_node.neighbors and node != origin_node:
                 plt.scatter(node.x, node.y, color='gray', s=50)
 
-        # Annotate node names
         for node in self.nodes:
             plt.text(node.x, node.y, f" {node.name}", fontsize=12, verticalalignment='bottom')
 
         plt.xlabel("X")
         plt.ylabel("Y")
-        plt.title(f"{title} {nameOrigin}")  # Dynamic title from variable
+        plt.title(f"{title} {nameOrigin}")
         plt.grid(True)
         plt.show()
 
