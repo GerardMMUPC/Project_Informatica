@@ -12,7 +12,7 @@ a.grid(column=0, row=2)
 def hide_label():
     a.config(text="Vuelve a pensarlo")
 
-ttk.Label(frame, text="¿Es Gerard el más sexy?").grid(column=0, row=1)
+ttk.Label(frame, text="Prueba").grid(column=0, row=1)
 
 
 ttk.Button(frame, text="Sí", command=window.destroy).grid(column=1, row=1)
