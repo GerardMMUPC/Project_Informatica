@@ -87,3 +87,7 @@ print("Probando el grafo 2...")
 G2 = CreateGraph_2()
 Plot(G2,title="Mapa de rutas aéreas de EE. UU.")
 PlotNode(G2,"JFK", title="Mapa de rutas aéreas conectados a JFK.")
+
+G3 = FileGraph()
+Plot(G3, title="Prueba")
+PlotNode(G3, "P", title="Prubb")

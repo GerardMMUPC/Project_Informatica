@@ -1,7 +1,10 @@
 import matplotlib.pyplot as plt
 from Node import Node, Distance, AddNeighbor  # Import necessary functions and classes
 from Segment import Segment  # Import Segment class
-
+class Graph:
+    def __init__(self):
+        self.nodes = []
+        self.segments = []
 # Standalone function to add a node to the graph
 def AddNode(g, n):
     for node in g.nodes:
@@ -114,8 +117,28 @@ def PlotNode(g, nameOrigin, title="Graph view from node"):
 
     return True
 
-# Define Graph class to hold the nodes and segments
-class Graph:
-    def __init__(self):
-        self.nodes = []
-        self.segments = []
+def FileGraph():
+    G = Graph()
+    N = []
+    x = []
+    y = []
+
+    with open("text_graph", 'r') as fichero:
+        for linea in fichero:
+            elementos = linea.split()
+
+            if len(elementos) < 3:
+                continue
+
+            name = elementos[0]
+            node_x = int(elementos[1])
+            node_y = int(elementos[2])
+
+            node = Node(name, node_x, node_y)
+            AddNode(G,node)
+
+            N.append(name)
+            x.append(node_x)
+            y.append(node_y)
+
+    return G
