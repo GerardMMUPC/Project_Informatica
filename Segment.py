@@ -6,7 +6,7 @@ class Segment:
         self.name = str(name)
         self.origin = origin
         self.destination = destination
-        self.cost = self.origin.Distance(self.origin, self.destination) # No és cost de diners :)
+        self.cost = Distance(self.origin, self.destination) # No és cost de diners :)
 
     def __str__(self):
         return f"Segment {self.name}: {self.origin.name} to {self.destination.name}, Cost: {self.cost}"
