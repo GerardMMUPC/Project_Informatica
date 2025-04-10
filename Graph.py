@@ -117,6 +117,7 @@ def PlotNode(g, nameOrigin, title="Graph view from node"):
 
     return True
 
+
 def FileGraph():
     G = Graph()
     N = []
@@ -124,21 +125,37 @@ def FileGraph():
     y = []
 
     with open("text_graph", 'r') as fichero:
-        for linea in fichero:
-            elementos = linea.split()
 
-            if len(elementos) < 3:
+        line = fichero.readline().strip()
+        while line != "":
+            if line.startswith("#"):
+                line = fichero.readline().strip()
                 continue
 
-            name = elementos[0]
-            node_x = int(elementos[1])
-            node_y = int(elementos[2])
+            elementos = line.split()
 
-            node = Node(name, node_x, node_y)
-            AddNode(G,node)
+            if len(elementos) == 3:
+                name = elementos[0]
+                node_x = int(elementos[1])
+                node_y = int(elementos[2])
 
-            N.append(name)
-            x.append(node_x)
-            y.append(node_y)
 
-    return G
+                node = Node(name, node_x, node_y)
+                AddNode(G,node)
+
+
+                N.append(name)
+                x.append(node_x)
+                y.append(node_y)
+            elif len(elementos) == 2:
+                node1_name = elementos[0]
+                node2_name = elementos[1]
+
+                # Add the segment to the graph
+                AddSegment(G,node1_name, node2_name)
+
+            # Read the next line
+            line = fichero.readline().strip()
+
+    return G  # Return the created graph
+

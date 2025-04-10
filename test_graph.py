@@ -51,14 +51,14 @@ def CreateGraph_2():
     # Create Graph object
     G2 = Graph()
 
-    # Add nodes to the graph (JFK, LAX, etc.)
+
     AddNode(G2, Node("JFK", 40.6413, -73.7781))
     AddNode(G2, Node("LAX", 33.9416, -118.4085))
     AddNode(G2, Node("ORD", 41.9744, -87.9075))
     AddNode(G2, Node("ATL", 33.6407, -84.4279))
     AddNode(G2, Node("MIA", 25.7937, -80.2906))
 
-    # Add segments (flights between airports)
+
     AddSegment(G2, "JFK", "LAX")
     AddSegment(G2, "JFK", "ORD")
     AddSegment(G2, "LAX", "ORD")

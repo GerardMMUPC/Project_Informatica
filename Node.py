@@ -1,6 +1,7 @@
 import math
 
 class Node:
+
     def __init__(self, name, x, y, neighbors=None):
         self.name = str(name)
         self.x = float(x)
