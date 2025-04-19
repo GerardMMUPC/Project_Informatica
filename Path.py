@@ -16,4 +16,4 @@ class Path:
         cost = 0
         #Càlcul distància Euclidiana
     def PlotPath(self, Graph): #Dibuixa el camí al gràfic
-#Gerardhola
+

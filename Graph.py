@@ -116,3 +116,32 @@ class Graph:
         plt.show()
 
         return True
+
+def FileGraph():
+
+    i= 0
+    G = Graph()
+    N=[]
+    x = []
+    y = []
+
+    fichero = open("textgraph", 'r')
+    linea = fichero.readline()
+    while linea != "":
+        elementos = linea.split(" ")  # llista
+
+        name = elementos[0]
+        G.nodex = elementos[1]
+        G.nodey = elementos[2]
+
+        N[i]= int(name.append())
+        x[i] = int(name.append())
+        y[i] = int(name.append())
+
+        i +=1
+
+
+
+
+
+

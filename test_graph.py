@@ -82,5 +82,9 @@ G2 = CreateGraph_2()
 G2.Plot(title="Mapa de rutas aéreas de EE. UU.")
 G2.PlotNode("JFK", title="Mapa de rutas aéreas conectados a JFK.")
 
+G3 = FileGraph()
+G3.Plot(title="Prueba")
+G3.PlotNode("P", title="Prubb")
+
 
 
