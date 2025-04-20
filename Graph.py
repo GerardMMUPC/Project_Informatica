@@ -110,43 +110,55 @@ def PlotNode(g, nameOrigin, title="Graph view from node"):
 
     return True
 
-
-def FileGraph():
+def FileGraph(filename):
     G = Graph()
     N = []
     x = []
     y = []
 
-    with open("text_graph", 'r') as fichero:
+    try: #Added prints are debugs
+        print(f"Attempting to open file: {filename}")
 
-        line = fichero.readline().strip()
-        while line != "":
-            if line.startswith("#"):
-                line = fichero.readline().strip()
-                continue
-
-            elementos = line.split()
-
-            if len(elementos) == 3:
-                name = elementos[0]
-                node_x = int(elementos[1])
-                node_y = int(elementos[2])
-
-
-                node = Node(name, node_x, node_y)
-                AddNode(G,node)
-
-
-                N.append(name)
-                x.append(node_x)
-                y.append(node_y)
-            elif len(elementos) == 2:
-                node1_name = elementos[0]
-                node2_name = elementos[1]
-
-                AddSegment(G,node1_name, node2_name)
-
+        with open(filename, 'r') as fichero:
             line = fichero.readline().strip()
+            print("Reading file...")
+            if not line:
+                print("File is empty or first line is blank.")
+                return None
 
+            while line != "":
+                print(f"Line: {line}") #Print current line being processed
+                if line.startswith("#"):
+                    line = fichero.readline().strip()
+                    continue
+
+                elementos = line.split()
+                print(f"Split elements: {elementos}") #Print split elements
+
+                if len(elementos) == 3:
+                    name = elementos[0]
+                    node_x = int(elementos[1])
+                    node_y = int(elementos[2])
+
+                    node = Node(name, node_x, node_y)
+                    AddNode(G,node)
+
+                    N.append(name)
+                    x.append(node_x)
+                    y.append(node_y)
+
+                    print (f"Node added: {name} at ({node_x}, {node_y})")
+
+                elif len(elementos) == 2:
+                    node1_name = elementos[0]
+                    node2_name = elementos[1]
+
+                    AddSegment(G,node1_name, node2_name)
+
+                    print(f"Segment added between {node1_name} and {node2_name}")
+
+                line = fichero.readline().strip()
+    except Exception as e:
+        print(f"Error reading file: {e}")
     return G  
 

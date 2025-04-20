@@ -51,13 +51,11 @@ def CreateGraph_2():
     # Create Graph object
     G2 = Graph()
 
-
     AddNode(G2, Node("JFK", 40.6413, -73.7781))
     AddNode(G2, Node("LAX", 33.9416, -118.4085))
     AddNode(G2, Node("ORD", 41.9744, -87.9075))
     AddNode(G2, Node("ATL", 33.6407, -84.4279))
     AddNode(G2, Node("MIA", 25.7937, -80.2906))
-
 
     AddSegment(G2, "JFK", "LAX")
     AddSegment(G2, "JFK", "ORD")
@@ -69,25 +67,26 @@ def CreateGraph_2():
 
     return G2
 
-# Graph 1
-print("Probando el grafo 1...")
-G1 = CreateGraph_1()
-Plot(G1,title="Grafico con nodos y segmentos")
-PlotNode(G1,"C", title="Grafico con nodos y segmentos")
+if __name__ == "__main__": #Prevents from running everything unless directly
+    # Graph 1
+    print("Probando el grafo 1...")
+    G1 = CreateGraph_1()
+    Plot(G1,title="Grafico con nodos y segmentos")
+    PlotNode(G1,"C", title="Gráfico con nodos y segmentos")
 
-# Get the closest node to the given coordinates
-closest_node_1 = GetClosest(G1,15, 5)
-print(closest_node_1.name)  # Se espera J
+    # Get the closest node to the given coordinates
+    closest_node_1 = GetClosest(G1,15, 5)
+    print(closest_node_1.name)  # Se espera J
 
-closest_node_2 = GetClosest(G1,8, 19)
-print(closest_node_2.name)  # Se espera B
+    closest_node_2 = GetClosest(G1,8, 19)
+    print(closest_node_2.name)  # Se espera B
 
-# Graph 2
-print("Probando el grafo 2...")
-G2 = CreateGraph_2()
-Plot(G2,title="Mapa de rutas aéreas de EE. UU.")
-PlotNode(G2,"JFK", title="Mapa de rutas aéreas conectados a JFK.")
+    # Graph 2
+    print("Probando el grafo 2...")
+    G2 = CreateGraph_2()
+    Plot(G2,title="Mapa de rutas aéreas de EE. UU.")
+    PlotNode(G2,"JFK", title="Mapa de rutas aéreas conectados a JFK.")
 
-G3 = FileGraph()
-Plot(G3, title="Prueba")
-PlotNode(G3, "P", title="Prubb")
+    #G3 = FileGraph()
+    #Plot(G3, title="Prueba")
+    #PlotNode(G3, "P", title="Prueba")
