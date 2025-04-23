@@ -1,109 +1,168 @@
-#Step 5 - Graphical interface that:
- #Shows example graph in step 3
- #Shows invented graph in step 3
- #Select file with graph with decided on format in step 3 and show
- #Select node in graph to show its neighbors
-
-#We first define the window for the interface:
-#Initial conditions:
 from tkinter import *
-from tkinter import ttk #More modern look to tkinter
-from tkinter import filedialog
+from tkinter import ttk
+from tkinter import filedialog, messagebox
 import matplotlib.pyplot as plt
+from Graph import FileGraph, Plot, PlotNode, AddNode, AddSegment, Graph
+from Node import Node
 
-window = Tk() #Gives me blank window
-frame = ttk.Frame(window) #Frame: Grouping code tool
-frame.grid() #We will group as a grid (on window)
+window = Tk()
+window.title("Editor de Grafos")
+window.configure(bg='#f0f0f0')
+
+frame = ttk.Frame(window, padding=10)
+frame.grid(row=0, column=0, sticky="nsew")
 
 graph = None
+custom_graph = Graph()
 
-#Assign functions to each button:
-def Show_Example_Graph():
+# Funciones de los botones:
+
+def Mostrar_Grafo_Ejemplo():
     from test_graph import CreateGraph_1
-    from Graph import Plot, PlotNode
     G1 = CreateGraph_1()
-    Plot(G1, title=  "Node and segment graph/Gráfico con nodos y segmentos")
+    Plot(G1, title="Gráfico con nodos y segmentos")
 
-def Show_Invented_Graph():
+def Mostrar_Grafo_Inventado():
     from test_graph import CreateGraph_2
-    from Graph import Plot, PlotNode
     G2 = CreateGraph_2()
-    Plot(G2, title = "USA's air routes map/Mapa de rutas aéreas de EE. UU.")
+    Plot(G2, title="Mapa de rutas aéreas de EE. UU.")
 
-def Select_Graph_File(): #CHECK
-    global graph #So it can be used by ther functions
-
-    # Using a file picker
+def Seleccionar_Archivo_Grafo():
+    global graph
     filename = filedialog.askopenfilename(
-        title = "Select a graph file",
-        filetypes = [("Text Files", "*.txt")]
+        title="Selecciona un archivo de grafo",
+        filetypes=[("Archivos de texto", "*.txt")]
     )
     if not filename:
-        return #Cancelled operation
-
-    #Now, using a graph-maker function we read and input the values for given file:
-    from Graph import FileGraph
-    print("Reading file...")
+        return
     graph = FileGraph(filename)
     if not graph:
-        print("The graph is empty or the file format is incorrect.")
+        messagebox.showerror("Error", "El grafo está vacío o el formato del archivo es incorrecto.")
         return
-
-    print("Graph loaded successfully!")
+    messagebox.showinfo("Éxito", "Grafo cargado con éxito!")
     Plot(graph)
 
-def Neighbors_to_Node(): #CHECK
+def Vecinos_De_Un_Nodo():
     if graph is None:
-        print("No graph loaded.")
+        messagebox.showwarning("Advertencia", "No se ha cargado ningún grafo.")
         return
 
-    node = node_entry.get()
+    node_name = node_entry.get()
+    if not any(node.name == node_name for node in graph.nodes):
+        messagebox.showerror("Error", f"Nodo {node_name} no encontrado en el grafo.")
+        return
 
-    if node not in graph:
-        print(f"Node {node} not found in the graph.")
+    PlotNode(graph, node_name, title=f"Grafo con el nodo {node_name} y sus vecinos")
 
-    neighbours = graph[node]
+def Agregar_Nodo():
+    nombre = entry_nombre_nodo.get()
+    try:
+        x = float(entry_x.get())
+        y = float(entry_y.get())
+    except ValueError:
+        messagebox.showerror("Error", "Las coordenadas deben ser números.")
+        return
 
-    from Graph import Plot
-    Plot(graph, title="Graph with Node and Neighbors")
+    nodo = Node(nombre, x, y)
+    if AddNode(custom_graph, nodo):
+        messagebox.showinfo("Éxito", f"Nodo '{nombre}' agregado.")
+    else:
+        messagebox.showwarning("Aviso", f"El nodo '{nombre}' ya existe.")
 
-    # Now highlight the node and its neighbors
-    from Graph import PlotNode
-    PlotNode(graph, node, neighbors, title = f"Graph with Node {node} and Neighbors Highlighted")
+def Agregar_Segmento():
+    origen = entry_origen.get()
+    destino = entry_destino.get()
+    if AddSegment(custom_graph, origen, destino):
+        messagebox.showinfo("Éxito", f"Segmento entre '{origen}' y '{destino}' agregado.")
+    else:
+        messagebox.showerror("Error", f"No se pudo agregar el segmento. Asegúrate de que ambos nodos existan.")
 
-#Add text and buttons to the window:
-title = ttk.Label(frame, text = "Welcome!", font = ("Verdana", 20))
-title.grid(column = 0, row = 0)
+def Mostrar_Grafo_Custom():
+    Plot(custom_graph, title="Grafo Personalizado")
 
-subtitle = ttk.Label(frame, text = "This is the program made by group 14", font = ("Verdana", 10))
-subtitle.grid(column = 0, row = 1)
+def Guardar_Grafo():
+    filename = filedialog.asksaveasfilename(
+        title="Guardar grafo como",
+        defaultextension=".txt",
+        filetypes=[("Archivos de texto", "*.txt")]
+    )
+    if not filename:
+        return
 
-text1 = ttk.Label(frame, text = "Example graph of step 3", font = ("Verdana", 12))
-text1.grid(column = 0, row = 2)
-ttk.Button(frame, text = "Show", command = Show_Example_Graph).grid(column = 1, row = 2)
+    try:
+        with open(filename, 'w') as f:
+            for node in custom_graph.nodes:
+                f.write(f"{node.name} {int(node.x)} {int(node.y)}\n")
+            for seg in custom_graph.segments:
+                f.write(f"{seg.origin.name} {seg.destination.name}\n")
+        messagebox.showinfo("Éxito", f"Grafo guardado en {filename}")
+    except Exception as e:
+        messagebox.showerror("Error", f"No se pudo guardar el archivo: {e}")
 
-text2 = ttk.Label(frame, text = "Invented graph of step 3", font = ("Verdana", 12))
-text2.grid(column = 0, row = 3)
-ttk.Button(frame, text = "Show", command = Show_Invented_Graph).grid(column = 1, row = 3)
+# Etiquetas y botones:
 
-text3 = ttk.Label(frame, text = "Select graph file to show", font = ("Verdana", 12))
-text3.grid(column = 0, row = 4)
-ttk.Button(frame, text = "Select", command = Select_Graph_File).grid(column = 1, row = 4)
+# Sección de grafo de ejemplo:
+example_frame = ttk.LabelFrame(frame, text="Gráficos de ejemplo", padding="10")
+example_frame.grid(row=0, column=0, sticky="w", padx=10, pady=5)
+Label(example_frame, text="Grafo de ejemplo (paso 3)", font=("Verdana", 12)).grid(row=0, column=0, sticky=W)
+ttk.Button(example_frame, text="Mostrar", command=Mostrar_Grafo_Ejemplo).grid(row=0, column=1)
 
-text4 = ttk.Label(frame, text = "Select node in graph", font = ("Verdana", 12))
-text4.grid(column = 0, row = 5)
-node_entry = ttk.Entry(frame)
-node_entry.grid(column = 1, row = 5)
-ttk.Button(frame, text="Show Neighbors", command=Neighbors_to_Node).grid(column=2, row=5)
+Label(example_frame, text="Grafo inventado (paso 3)", font=("Verdana", 12)).grid(row=1, column=0, sticky=W)
+ttk.Button(example_frame, text="Mostrar", command=Mostrar_Grafo_Inventado).grid(row=1, column=1)
 
-ttk.Button(frame, text = "Exit", command = window.destroy).grid(column = 0, row = 6)
+Label(example_frame, text="Seleccionar archivo de grafo", font=("Verdana", 12)).grid(row=2, column=0, sticky=W)
+ttk.Button(example_frame, text="Seleccionar", command=Seleccionar_Archivo_Grafo).grid(row=2, column=1)
 
-window.mainloop() #Keeps window open
-#Notes:
- #To make graph first summon "from tkinter import *" and import ttk for more modern
- #Tk(): Tkinter gives a blank window to work with.
- #ttk.Frame(): Groups code and displays it in a certain way
- #frame.grid(): Displays grouped code following a grid placement
- #ttk.Label(): Displays text (customizable)
- #"something".grid(): Lets you position something on window
- #ttk.Button(): Creates a button (customizable) that can follow a command when pressed.
+# Sección de nodo:
+node_frame = ttk.LabelFrame(frame, text="Agregar Nodo", padding="10")
+node_frame.grid(row=1, column=0, sticky="w", padx=10, pady=5)
+
+Label(node_frame, text="Nombre nodo:").grid(row=0, column=0, sticky=W)
+entry_nombre_nodo = ttk.Entry(node_frame)
+entry_nombre_nodo.grid(row=0, column=1)
+
+Label(node_frame, text="X:").grid(row=1, column=0, sticky=W)
+entry_x = ttk.Entry(node_frame)
+entry_x.grid(row=1, column=1)
+
+Label(node_frame, text="Y:").grid(row=2, column=0, sticky=W)
+entry_y = ttk.Entry(node_frame)
+entry_y.grid(row=2, column=1)
+
+ttk.Button(node_frame, text="Agregar nodo", command=Agregar_Nodo).grid(row=3, column=0, columnspan=2, pady=5)
+
+# Sección de segmento:
+segment_frame = ttk.LabelFrame(frame, text="Agregar Segmento", padding="10")
+segment_frame.grid(row=2, column=0, sticky="w", padx=10, pady=5)
+
+Label(segment_frame, text="Origen:").grid(row=0, column=0, sticky=W)
+entry_origen = ttk.Entry(segment_frame)
+entry_origen.grid(row=0, column=1)
+
+Label(segment_frame, text="Destino:").grid(row=1, column=0, sticky=W)
+entry_destino = ttk.Entry(segment_frame)
+entry_destino.grid(row=1, column=1)
+
+ttk.Button(segment_frame, text="Agregar segmento", command=Agregar_Segmento).grid(row=2, column=0, columnspan=2, pady=5)
+
+# Sección de visualización y guardado:
+action_frame = ttk.LabelFrame(frame, text="Acciones de Grafo", padding="10")
+action_frame.grid(row=3, column=0, sticky="w", padx=10, pady=5)
+
+ttk.Button(action_frame, text="Mostrar grafo personalizado", command=Mostrar_Grafo_Custom).grid(row=0, column=0, pady=5)
+ttk.Button(action_frame, text="Guardar grafo", command=Guardar_Grafo).grid(row=1, column=0, pady=5)
+
+# Sección para ver vecinos del nodo:
+neighbors_frame = ttk.LabelFrame(frame, text="Ver Vecinos de Nodo", padding="10")
+neighbors_frame.grid(row=4, column=0, sticky="w", padx=10, pady=5)
+
+Label(neighbors_frame, text="Nombre del nodo:").grid(row=0, column=0, sticky=W)
+node_entry = ttk.Entry(neighbors_frame)
+node_entry.grid(row=0, column=1)
+
+ttk.Button(neighbors_frame, text="Mostrar vecinos", command=Vecinos_De_Un_Nodo).grid(row=1, column=0, columnspan=2, pady=5)
+
+# Botón de salida:
+ttk.Button(frame, text="Salir", command=window.destroy).grid(row=5, column=0, columnspan=2, pady=10)
+
+window.mainloop()
