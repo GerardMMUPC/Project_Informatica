@@ -1,7 +1,6 @@
 from tkinter import *
 from tkinter import ttk
 from tkinter import filedialog, messagebox
-import matplotlib.pyplot as plt
 from Graph import FileGraph, Plot, PlotNode, AddNode, AddSegment, Graph
 from Node import Node
 
