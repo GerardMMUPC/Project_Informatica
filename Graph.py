@@ -1,6 +1,7 @@
 import matplotlib.pyplot as plt
 from Node import Node, Distance, AddNeighbor
 from Segment import Segment
+
 class Graph:
     def __init__(self):
         self.nodes = []

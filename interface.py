@@ -77,6 +77,20 @@ def Agregar_Segmento():
     else:
         messagebox.showerror("Error", f"No se pudo agregar el segmento. Asegúrate de que ambos nodos existan.")
 
+def Eliminar_Nodo():
+
+    nombre = entry_eliminar_nodo.get()
+    for nodo in custom_graph.nodes:
+        if nodo.name == nombre:
+
+            custom_graph.segments = [s for s in custom_graph.segments if s.origin.name != nombre and s.destination.name != nombre]
+            custom_graph.nodes.remove(nodo)
+            messagebox.showinfo("Éxito", f"Nodo '{nombre}' eliminado.")
+            return
+    messagebox.showerror("Error", f"No se encontró el nodo '{nombre}' en el grafo.")
+
+
+
 def Mostrar_Grafo_Custom():
     Plot(custom_graph, title="Grafo Personalizado")
 
@@ -162,7 +176,17 @@ node_entry.grid(row=0, column=1)
 
 ttk.Button(neighbors_frame, text="Mostrar vecinos", command=Vecinos_De_Un_Nodo).grid(row=1, column=0, columnspan=2, pady=5)
 
+# Sección para eliminar nodos
+delete_frame = ttk.LabelFrame(frame, text="Eliminar Nodo", padding="10")
+delete_frame.grid(row=6, column=0, sticky="w", padx=10, pady=5)
+
+Label(delete_frame, text="Nombre del nodo a eliminar:").grid(row=0, column=0, sticky=W)
+entry_eliminar_nodo = ttk.Entry(delete_frame)
+entry_eliminar_nodo.grid(row=0, column=1)
+
+ttk.Button(delete_frame, text="Eliminar nodo", command=Eliminar_Nodo).grid(row=1, column=0, columnspan=2, pady=5)
+
 # Botón de salida:
-ttk.Button(frame, text="Salir", command=window.destroy).grid(row=5, column=0, columnspan=2, pady=10)
+ttk.Button(frame, text="Salir", command=window.destroy).grid(row=7, column=0, columnspan=2, pady=10)
 
 window.mainloop()
