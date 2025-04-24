@@ -11,3 +11,4 @@ C D
 A C
 B D
 E F
+E C

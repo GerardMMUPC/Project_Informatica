@@ -164,7 +164,7 @@ def FileGraph(filename):
     return G
 
 
-def find_shortest_path(origin, destination):
+def find_shortest_path(g,origin, destination):
     from Path import Path
     current_paths = [Path([origin], origin.distance(destination))]
 
@@ -185,4 +185,3 @@ def find_shortest_path(origin, destination):
             current_paths.append(Path(new_path.nodes, est_cost))
 
     return None
-

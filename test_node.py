@@ -9,7 +9,6 @@ print(AddNeighbor(n1,n2))
 
 print(n1.__dict__)
 
-
 for n in n1.neighbors:
 
     print(n.__dict__)
