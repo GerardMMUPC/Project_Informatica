@@ -161,5 +161,28 @@ def FileGraph(filename):
                 line = fichero.readline().strip()
     except Exception as e:
         print(f"Error reading file: {e}")
-    return G  
+    return G
+
+
+def find_shortest_path(self, origin, destination):
+    from Path import Path
+    current_paths = [Path([origin], origin.distance(destination))]
+
+    while current_paths:
+        current_paths.sort(key=lambda p: p.cost)
+        best_path = current_paths.pop(0)
+        last_node = best_path.nodes[-1]
+
+        for neighbor, dist in last_node.neighbors:
+            if best_path.contains_node(neighbor):
+                continue
+            new_path = best_path.copy()
+            new_path.add_node(neighbor, dist)
+
+            if neighbor == destination:
+                return new_path
+            est_cost = new_path.cost + neighbor.distance(destination)
+            current_paths.append(Path(new_path.nodes, est_cost))
+
+    return None
 
