@@ -1,8 +1,7 @@
 from tkinter import *
 from tkinter import ttk
 from tkinter import filedialog, messagebox
-import matplotlib.pyplot as plt
-from Graph import FileGraph, Plot, PlotNode, AddNode, AddSegment, Graph
+from Graph import FileGraph, Plot, PlotNode, AddNode, AddSegment, Graph, PlotReachability
 from Node import Node
 
 window = Tk()
@@ -48,7 +47,7 @@ def Vecinos_De_Un_Nodo():
         return
 
     node_name = node_entry.get()
-    if not any(node.name == node_name for node in graph.nodes):
+    if not any(Node.name == node_name for Node in graph.nodes):
         messagebox.showerror("Error", f"Nodo {node_name} no encontrado en el grafo.")
         return
 
@@ -77,8 +76,80 @@ def Agregar_Segmento():
     else:
         messagebox.showerror("Error", f"No se pudo agregar el segmento. Asegúrate de que ambos nodos existan.")
 
+def Eliminar_Nodo():
+
+    nombre = entry_eliminar_nodo.get()
+    for nodo in custom_graph.nodes:
+        if nodo.name == nombre:
+
+            custom_graph.segments = [s for s in custom_graph.segments if s.origin.name != nombre and s.destination.name != nombre]
+            custom_graph.nodes.remove(nodo)
+            messagebox.showinfo("Éxito", f"Nodo '{nombre}' eliminado.")
+            return
+    messagebox.showerror("Error", f"No se encontró el nodo '{nombre}' en el grafo.")
+
+
+
 def Mostrar_Grafo_Custom():
     Plot(custom_graph, title="Grafo Personalizado")
+
+
+def Mostrar_Nodos_Alcanzables():
+    # Determinar qué grafo usar
+    current_graph = None
+    graph_name = ""
+
+    if graph and graph.nodes:
+        current_graph = graph
+        graph_name = "cargado"
+    elif custom_graph and custom_graph.nodes:
+        current_graph = custom_graph
+        graph_name = "personalizado"
+
+    if not current_graph:
+        messagebox.showwarning("Advertencia",
+                               "No se ha cargado ningún grafo.\n\n"
+                               "Por favor:\n"
+                               "1. Carga un grafo desde archivo\n"
+                               "2. Usa un grafo de ejemplo\n"
+                               "3. O crea un grafo personalizado")
+        return
+
+    node_name = reach_entry.get().strip()
+    if not node_name:
+        messagebox.showwarning("Advertencia", "Por favor, introduce un nombre de nodo.")
+        return
+
+    if not any(node.name == node_name for node in current_graph.nodes):
+        messagebox.showerror("Error", f"Nodo '{node_name}' no encontrado en el grafo {graph_name}.")
+        return
+
+    try:
+        PlotReachability(current_graph, node_name)
+    except Exception as e:
+        messagebox.showerror("Error", f"No se pudo mostrar los nodos alcanzables: {str(e)}")
+
+def Mostrar_Camino_Mas_Corto():
+    if graph is None:
+        messagebox.showwarning("Advertencia", "No se ha cargado ningún grafo.")
+        return
+
+    origin = origin_entry.get()
+    destination = dest_entry.get()
+
+    if not any(nombre_nodo == origin for Node in graph.nodes):
+        messagebox.showerror("Error", f"Nodo {origin} no encontrado en el grafo.")
+        return
+
+    if not any(nombre_nodo == destination for Node in graph.nodes):
+        messagebox.showerror("Error", f"Nodo {destination} no encontrado en el grafo.")
+        return
+
+    path = FindShortestPath(graph, origin, destination)
+    if path:
+        path.PlotPath(graph)
+    else:
+        messagebox.showinfo("Información", f"No hay camino entre {origin} y {destination}")
 
 def Guardar_Grafo():
     filename = filedialog.asksaveasfilename(
@@ -91,13 +162,14 @@ def Guardar_Grafo():
 
     try:
         with open(filename, 'w') as f:
-            for node in custom_graph.nodes:
-                f.write(f"{node.name} {int(node.x)} {int(node.y)}\n")
+            for Node in custom_graph.nodes:
+                f.write(f"{Node.name} {int(Node.x)} {int(Node.y)}\n")
             for seg in custom_graph.segments:
                 f.write(f"{seg.origin.name} {seg.destination.name}\n")
         messagebox.showinfo("Éxito", f"Grafo guardado en {filename}")
     except Exception as e:
         messagebox.showerror("Error", f"No se pudo guardar el archivo: {e}")
+
 
 # Etiquetas y botones:
 
@@ -162,7 +234,41 @@ node_entry.grid(row=0, column=1)
 
 ttk.Button(neighbors_frame, text="Mostrar vecinos", command=Vecinos_De_Un_Nodo).grid(row=1, column=0, columnspan=2, pady=5)
 
+# Sección para eliminar nodos
+delete_frame = ttk.LabelFrame(frame, text="Eliminar Nodo", padding="10")
+delete_frame.grid(row=1, column=1, sticky="w", padx=10, pady=5)
+
+Label(delete_frame, text="Nombre del nodo a eliminar:").grid(row=0, column=0, sticky=W)
+entry_eliminar_nodo = ttk.Entry(delete_frame)
+entry_eliminar_nodo.grid(row=0, column=1)
+
+ttk.Button(delete_frame, text="Eliminar nodo", command=Eliminar_Nodo).grid(row=1, column=0, columnspan=2, pady=10)
+
+# Sección para nodos alcanzables
+reach_frame = ttk.LabelFrame(frame, text="Nodos Alcanzables", padding="10")
+reach_frame.grid(row=5, column=0, sticky="w", padx=10, pady=5)
+
+Label(reach_frame, text="Nodo origen:").grid(row=0, column=0, sticky=W)
+reach_entry = ttk.Entry(reach_frame)
+reach_entry.grid(row=0, column=1)
+
+ttk.Button(reach_frame, text="Mostrar nodos alcanzables", command=Mostrar_Nodos_Alcanzables).grid(row=1, column=0, columnspan=2, pady=5)
+
+# Sección para camino más corto
+path_frame = ttk.LabelFrame(frame, text="Camino Más Corto", padding="10")
+path_frame.grid(row=6, column=0, sticky="w", padx=10, pady=5)
+
+Label(path_frame, text="Nodo origen:").grid(row=0, column=0, sticky=W)
+origin_entry = ttk.Entry(path_frame)
+origin_entry.grid(row=0, column=1)
+
+Label(path_frame, text="Nodo destino:").grid(row=1, column=0, sticky=W)
+dest_entry = ttk.Entry(path_frame)
+dest_entry.grid(row=1, column=1)
+
+ttk.Button(path_frame, text="Mostrar camino más corto", command=Mostrar_Camino_Mas_Corto).grid(row=2, column=0, columnspan=2, pady=5)
+
 # Botón de salida:
-ttk.Button(frame, text="Salir", command=window.destroy).grid(row=5, column=0, columnspan=2, pady=10)
+ttk.Button(frame, text="Salir", command=window.destroy).grid(row=7, column=0, columnspan=2, pady=10)
 
 window.mainloop()

@@ -1,6 +1,7 @@
 import matplotlib.pyplot as plt
 from Node import Node, Distance, AddNeighbor
 from Segment import Segment
+
 class Graph:
     def __init__(self):
         self.nodes = []
@@ -50,11 +51,11 @@ def Plot(graph, title="Graph of nodes"):
     for segment in graph.segments:
         x_values = [segment.origin.x, segment.destination.x]
         y_values = [segment.origin.y, segment.destination.y]
-        plt.plot(x_values, y_values, 'k-', linewidth=1)
+        plt.plot(x_values, y_values, color='black',linewidth=1)
 
         mid_x = (segment.origin.x + segment.destination.x) / 2
         mid_y = (segment.origin.y + segment.destination.y) / 2
-        plt.text(mid_x, mid_y, f"{segment.cost:.2f}", fontsize=10, ha='center', color='red')
+        plt.text(mid_x, mid_y, f"{segment.cost:.2f}", fontsize=10, ha='center', color='black')
 
     for node in graph.nodes:
         plt.scatter(node.x, node.y, color='black', s=50)
@@ -160,5 +161,72 @@ def FileGraph(filename):
                 line = fichero.readline().strip()
     except Exception as e:
         print(f"Error reading file: {e}")
-    return G  
+    return G
 
+
+def FindReachableNodes(g, origin_name):
+    origin = None
+    for Node in g.nodes:
+        if Node.name == origin_name:
+            origin = Node
+            break
+
+    if not origin:
+        return None
+
+    visited = set()
+    queue = [origin]
+    visited.add(origin)
+
+    while queue:
+        current_node = queue.pop(0)
+        for neighbor in current_node.neighbors:
+            if neighbor not in visited:
+                visited.add(neighbor)
+                queue.append(neighbor)
+
+    return list(visited)
+
+
+def PlotReachability(g, origin_name):
+    reachable_nodes = FindReachableNodes(g, origin_name)
+    if not reachable_nodes:
+        return False
+
+    plt.figure(figsize=(8, 6))
+
+
+    for segment in g.segments:
+        x_values = [segment.origin.x, segment.destination.x]
+        y_values = [segment.origin.y, segment.destination.y]
+        plt.plot(x_values, y_values, color='gray', linewidth=1)
+
+        mid_x = (segment.origin.x + segment.destination.x) / 2
+        mid_y = (segment.origin.y + segment.destination.y) / 2
+        plt.text(mid_x, mid_y, f"{segment.cost:.2f}", fontsize=8, ha='center', color='gray')
+
+    for Node in reachable_nodes:    #Subratlla els nodes i segments disponibles
+        plt.scatter(Node.x, Node.y, color='green', s=100)
+        plt.text(Node.x, Node.y, f" {Node.name}", fontsize=12, verticalalignment='bottom')
+
+        for neighbor in Node.neighbors:
+            if neighbor in reachable_nodes:
+                plt.plot([Node.x, neighbor.x], [Node.y, neighbor.y], color='green', linewidth=2)
+
+
+    origin = None   #Grafica el node d'origen
+    for Node in g.nodes:
+        if Node.name == origin_name:
+            origin = Node
+            break
+
+    if origin:
+        plt.scatter(origin.x, origin.y, color='blue', s=150)
+
+    plt.xlabel("X")
+    plt.ylabel("Y")
+    plt.title(f"Reachable nodes from {origin_name}")
+    plt.grid(True)
+    plt.show()
+
+    return True
