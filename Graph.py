@@ -164,18 +164,23 @@ def FileGraph(filename):
     return G
 
 
-def find_shortest_path(g,origin, destination):
+def Find_Shortest_Path(g, origin, destination):
     from Path import Path
+
     current_paths = [Path([origin], origin.distance(destination))]
 
     while current_paths:
+
         current_paths.sort(key=lambda p: p.cost)
         best_path = current_paths.pop(0)
         last_node = best_path.nodes[-1]
 
-        for neighbor, dist in last_node.neighbors:
+
+        for neighbor, dist in g.get_neighbors(last_node):
             if best_path.contains_node(neighbor):
                 continue
+
+
             new_path = best_path.copy()
             new_path.add_node(neighbor, dist)
 
