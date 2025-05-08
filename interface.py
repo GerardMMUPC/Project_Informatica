@@ -17,7 +17,20 @@ custom_graph = Graph()
 plot_frame = ttk.LabelFrame(frame, text="Visualización del Grafo", padding="10")
 plot_frame.grid(row=0, column=1, rowspan=8, padx=10, pady=5, sticky="nsew")
 
+fig = None
+canvas = None
+
+# Global entry widgets
+entry_nombre_nodo = None
+entry_x = None
+entry_y = None
+entry_origen = None
+entry_destino = None
+entry_eliminar_nodo = None
+node_entry = None
+
 def embed_plot(fig):
+    global canvas
     for widget in plot_frame.winfo_children():
         widget.destroy()
     canvas = FigureCanvasTkAgg(fig, master=plot_frame)
@@ -27,17 +40,19 @@ def embed_plot(fig):
 def Mostrar_Grafo_Ejemplo():
     from test_graph import CreateGraph_1
     G1 = CreateGraph_1()
+    global fig
     fig = Plot(G1, title="Ejemplo 1")
     embed_plot(fig)
 
 def Mostrar_Grafo_Inventado():
     from test_graph import CreateGraph_2
     G2 = CreateGraph_2()
+    global fig
     fig = Plot(G2, title="Ejemplo 2")
     embed_plot(fig)
 
 def Seleccionar_Archivo_Grafo():
-    global graph
+    global graph, fig
     filename = filedialog.askopenfilename(filetypes=[("Archivos de texto", "*.txt")])
     if not filename:
         return
@@ -89,6 +104,7 @@ def Eliminar_Nodo():
     messagebox.showerror("Error", f"Nodo '{nombre}' no encontrado.")
 
 def Mostrar_Grafo_Custom():
+    global fig
     fig = Plot(custom_graph, title="Grafo Personalizado")
     embed_plot(fig)
 
@@ -106,6 +122,31 @@ def Guardar_Grafo():
     except Exception as e:
         messagebox.showerror("Error", f"No se pudo guardar el archivo: {e}")
 
+# Zoom In function (for MouseWheel)
+def zoom_in(event):
+    if fig is None:
+        return
+    ax = fig.axes[0]
+    xlim, ylim = ax.get_xlim(), ax.get_ylim()
+    zoom_factor = 0.8  # Zoom in by 80%
+    ax.set_xlim([x * zoom_factor for x in xlim])
+    ax.set_ylim([y * zoom_factor for y in ylim])
+    canvas.draw()
+
+# Zoom Out function (for MouseWheel)
+def zoom_out(event):
+    if fig is None:
+        return
+    ax = fig.axes[0]
+    xlim, ylim = ax.get_xlim(), ax.get_ylim()
+    zoom_factor = 1.2  # Zoom out by 120%
+    ax.set_xlim([x * zoom_factor for x in xlim])
+    ax.set_ylim([y * zoom_factor for y in ylim])
+    canvas.draw()
+
+# Bind mouse scroll event to zoom in or out
+window.bind("<MouseWheel>", lambda event: zoom_in(event) if event.delta > 0 else zoom_out(event))
+
 # Widgets
 def create_entry(label_text, parent, row):
     ttk.Label(parent, text=label_text).grid(row=row, column=0, sticky="w")
@@ -120,7 +161,7 @@ ttk.Button(example_frame, text="Ejemplo 1", command=Mostrar_Grafo_Ejemplo).grid(
 ttk.Button(example_frame, text="Ejemplo 2", command=Mostrar_Grafo_Inventado).grid(row=0, column=1)
 ttk.Button(example_frame, text="Cargar archivo", command=Seleccionar_Archivo_Grafo).grid(row=0, column=2)
 
-# Nodo
+# Node Inputs
 node_frame = ttk.LabelFrame(frame, text="Agregar Nodo", padding="10")
 node_frame.grid(row=1, column=0, sticky="w", padx=10)
 entry_nombre_nodo = create_entry("Nombre:", node_frame, 0)
@@ -128,7 +169,7 @@ entry_x = create_entry("X:", node_frame, 1)
 entry_y = create_entry("Y:", node_frame, 2)
 ttk.Button(node_frame, text="Agregar nodo", command=Agregar_Nodo).grid(row=3, column=0, columnspan=2)
 
-# Segmento
+# Segment Inputs
 segment_frame = ttk.LabelFrame(frame, text="Agregar Segmento", padding="10")
 segment_frame.grid(row=2, column=0, sticky="w", padx=10)
 entry_origen = create_entry("Origen:", segment_frame, 0)
