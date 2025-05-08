@@ -1,4 +1,4 @@
-import matplotlib.pyplot as plt
+from matplotlib.figure import Figure
 from Node import Node, Distance, AddNeighbor
 from Segment import Segment
 
@@ -7,15 +7,12 @@ class Graph:
         self.nodes = []
         self.segments = []
 
-
 def AddNode(g, n):
     for node in g.nodes:
         if node.name == n.name:
             return False
-
     g.nodes.append(n)
     return True
-
 
 def AddSegment(g, name_origin, name_destination):
     origin_node = None
@@ -32,161 +29,89 @@ def AddSegment(g, name_origin, name_destination):
 
     seg = Segment(f"{origin_node.name}-{destination_node.name}", origin_node, destination_node)
     g.segments.append(seg)
-
-    AddNeighbor(origin_node, destination_node)  # Use the standalone function
-
+    AddNeighbor(origin_node, destination_node)
     return True
-
 
 def GetClosest(g, x, y):
     if not g.nodes:
         return None
-
-    closest_node = min(g.nodes, key=lambda node: ((node.x - x) ** 2 + (node.y - y) ** 2) ** 0.5)
-    return closest_node
+    return min(g.nodes, key=lambda node: ((node.x - x)**2 + (node.y - y)**2)**0.5)
 
 def Plot(graph, title="Graph of nodes"):
-    plt.figure(figsize=(8, 6))
+    fig = Figure(figsize=(8, 6))
+    ax = fig.add_subplot(111)
+    ax.set_title(title)
 
     for segment in graph.segments:
         x_values = [segment.origin.x, segment.destination.x]
         y_values = [segment.origin.y, segment.destination.y]
-        plt.plot(x_values, y_values, 'k-', linewidth=1)
-
+        ax.plot(x_values, y_values, 'k-', linewidth=1)
         mid_x = (segment.origin.x + segment.destination.x) / 2
         mid_y = (segment.origin.y + segment.destination.y) / 2
-        plt.text(mid_x, mid_y, f"{segment.cost:.2f}", fontsize=10, ha='center', color='red')
+        ax.text(mid_x, mid_y, f"{segment.cost:.2f}", fontsize=10, ha='center', color='red')
 
     for node in graph.nodes:
-        plt.scatter(node.x, node.y, color='black', s=50)
-        plt.text(node.x, node.y, f" {node.name}", fontsize=12, verticalalignment='bottom')
+        ax.scatter(node.x, node.y, color='black', s=50)
+        ax.text(node.x, node.y, f" {node.name}", fontsize=12, verticalalignment='bottom')
 
-    plt.xlabel("X")
-    plt.ylabel("Y")
-    plt.title(title)
-    plt.grid(True)
-    plt.show()
-
+    ax.set_xlabel("X")
+    ax.set_ylabel("Y")
+    ax.grid(True)
+    ax.set_aspect('equal', adjustable='datalim')
+    return fig
 
 def PlotNode(g, nameOrigin, title="Graph view from node"):
-    origin_node = None
-    for node in g.nodes:
-        if node.name == nameOrigin:
-            origin_node = node
-            break
+    origin_node = next((node for node in g.nodes if node.name == nameOrigin), None)
+    fig = Figure(figsize=(8, 6))
+    ax = fig.add_subplot(111)
+    ax.set_title(f"{title} {nameOrigin}")
+    ax.set_xlabel("X")
+    ax.set_ylabel("Y")
+    ax.grid(True)
 
     if origin_node is None:
-        return False
-
-    plt.figure(figsize=(8, 6))
+        return fig
 
     for segment in g.segments:
         x_values = [segment.origin.x, segment.destination.x]
         y_values = [segment.origin.y, segment.destination.y]
-        plt.plot(x_values, y_values, 'gray', linewidth=1)
+        ax.plot(x_values, y_values, 'gray', linewidth=1)
 
     for neighbor in origin_node.neighbors:
-        plt.scatter(neighbor.x, neighbor.y, color='green', s=80)
-        plt.plot([origin_node.x, neighbor.x], [origin_node.y, neighbor.y], 'r-', linewidth=2)
-
+        ax.scatter(neighbor.x, neighbor.y, color='green', s=80)
+        ax.plot([origin_node.x, neighbor.x], [origin_node.y, neighbor.y], 'r-', linewidth=2)
         mid_x = (origin_node.x + neighbor.x) / 2
         mid_y = (origin_node.y + neighbor.y) / 2
+        ax.text(mid_x, mid_y, f"{Distance(origin_node, neighbor):.2f}", fontsize=10, ha='center', color='red')
 
-        plt.text(mid_x, mid_y, f"{Distance(origin_node, neighbor):.2f}", fontsize=10, ha='center', color='red')
-
-    plt.scatter(origin_node.x, origin_node.y, color='blue', s=100)
+    ax.scatter(origin_node.x, origin_node.y, color='blue', s=100)
 
     for node in g.nodes:
         if node not in origin_node.neighbors and node != origin_node:
-            plt.scatter(node.x, node.y, color='gray', s=50)
+            ax.scatter(node.x, node.y, color='gray', s=50)
 
     for node in g.nodes:
-        plt.text(node.x, node.y, f" {node.name}", fontsize=12, verticalalignment='bottom')
+        ax.text(node.x, node.y, f" {node.name}", fontsize=12, verticalalignment='bottom')
 
-    plt.xlabel("X")
-    plt.ylabel("Y")
-    plt.title(f"{title} {nameOrigin}")
-    plt.grid(True)
-    plt.show()
-
-    return True
+    ax.set_aspect('equal', adjustable='datalim')
+    return fig
 
 def FileGraph(filename):
     G = Graph()
-    N = []
-    x = []
-    y = []
-
-    try: #Added prints are debugs
-        print(f"Attempting to open file: {filename}")
-
+    try:
         with open(filename, 'r') as fichero:
-            line = fichero.readline().strip()
-            print("Reading file...")
-            if not line:
-                print("File is empty or first line is blank.")
-                return None
-
-            while line != "":
-                print(f"Line: {line}") #Print current line being processed
-                if line.startswith("#"):
-                    line = fichero.readline().strip()
+            for line in fichero:
+                line = line.strip()
+                if not line or line.startswith("#"):
                     continue
-
                 elementos = line.split()
-                print(f"Split elements: {elementos}") #Print split elements
-
                 if len(elementos) == 3:
-                    name = elementos[0]
-                    node_x = int(elementos[1])
-                    node_y = int(elementos[2])
-
-                    node = Node(name, node_x, node_y)
-                    AddNode(G,node)
-
-                    N.append(name)
-                    x.append(node_x)
-                    y.append(node_y)
-
-                    print (f"Node added: {name} at ({node_x}, {node_y})")
-
+                    name, node_x, node_y = elementos
+                    node = Node(name, int(node_x), int(node_y))
+                    AddNode(G, node)
                 elif len(elementos) == 2:
-                    node1_name = elementos[0]
-                    node2_name = elementos[1]
-
-                    AddSegment(G,node1_name, node2_name)
-
-                    print(f"Segment added between {node1_name} and {node2_name}")
-
-                line = fichero.readline().strip()
+                    node1, node2 = elementos
+                    AddSegment(G, node1, node2)
     except Exception as e:
         print(f"Error reading file: {e}")
     return G
-
-
-def Find_Shortest_Path(g, origin, destination):
-    from Path import Path
-
-    current_paths = [Path([origin], origin.distance(destination))]
-
-    while current_paths:
-
-        current_paths.sort(key=lambda p: p.cost)
-        best_path = current_paths.pop(0)
-        last_node = best_path.nodes[-1]
-
-
-        for neighbor, dist in g.get_neighbors(last_node):
-            if best_path.contains_node(neighbor):
-                continue
-
-
-            new_path = best_path.copy()
-            new_path.add_node(neighbor, dist)
-
-            if neighbor == destination:
-                return new_path
-            est_cost = new_path.cost + neighbor.distance(destination)
-            current_paths.append(Path(new_path.nodes, est_cost))
-
-    return None
