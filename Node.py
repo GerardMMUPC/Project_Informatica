@@ -17,3 +17,4 @@ def AddNeighbor(n1, n2):
 # Function to calculate distance between two nodes
 def Distance(n1, n2):
     return math.sqrt((n2.x - n1.x) ** 2 + (n2.y - n1.y) ** 2)
+

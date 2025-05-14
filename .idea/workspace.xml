@@ -5,11 +5,18 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="916c5780-f4e2-4879-894c-afef715314fa" name="Changes" comment="">
-      <change afterPath="$PROJECT_DIR$/Path.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/test_path.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/airSpace.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/navAirpoint.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/navPoint.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/navSegment.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/test_airSpace.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/test_navAirpoint.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/test_navPoint.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/test_navSegment.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/vcs.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/vcs.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Graph.py" beforeDir="false" afterPath="$PROJECT_DIR$/Graph.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/interface.py" beforeDir="false" afterPath="$PROJECT_DIR$/interface.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/test_graph.py" beforeDir="false" afterPath="$PROJECT_DIR$/test_graph.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Node.py" beforeDir="false" afterPath="$PROJECT_DIR$/Node.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -39,12 +46,16 @@
   "keyToString": {
     "Python.Graph.executor": "Run",
     "Python.interface.executor": "Run",
+    "Python.test_airSpace.executor": "Run",
     "Python.test_graph.executor": "Run",
+    "Python.test_navAirpoint.executor": "Run",
+    "Python.test_navPoint.executor": "Run",
+    "Python.test_navSegment.executor": "Run",
     "Python.test_path.executor": "Run",
     "RunOnceActivity.ShowReadmeOnStart": "true",
     "RunOnceActivity.git.unshallow": "true",
     "git-widget-placeholder": "laiabranch",
-    "last_opened_file_path": "C:/Users/laia1/Desktop/Uni/1r de Carrera/QUATRI 2/INFORMÀTICA I/Projecte_Info_Laia/interface.py"
+    "last_opened_file_path": "C:/Users/laia1/Desktop/Uni/1r de Carrera/QUATRI 2/INFORMÀTICA I/Projecte_Info_Laia"
   }
 }]]></component>
   <component name="SharedIndexes">
