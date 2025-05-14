@@ -33,7 +33,6 @@ def AddSegment(g, name_origin, name_destination):
     seg = Segment(f"{origin_node.name}-{destination_node.name}", origin_node, destination_node)
     g.segments.append(seg)
 
-    # Añadir como vecinos en ambas direcciones (grafo no dirigido)
     AddNeighbor(origin_node, destination_node)
     AddNeighbor(destination_node, origin_node)
 
@@ -47,28 +46,52 @@ def GetClosest(g, x, y):
     closest_node = min(g.nodes, key=lambda node: ((node.x - x) ** 2 + (node.y - y) ** 2) ** 0.5)
     return closest_node
 
-def Plot(graph, title="Graph of nodes"):
-    plt.figure(figsize=(8, 6))
+
+def Plot(graph, highlight_path=None, highlight_nodes=None, title="Graph"):
+    plt.figure(figsize=(10, 8))
+    ax = plt.gca()
 
     for segment in graph.segments:
-        x_values = [segment.origin.x, segment.destination.x]
-        y_values = [segment.origin.y, segment.destination.y]
-        plt.plot(x_values, y_values, 'k-', linewidth=1)
+        edge_color = 'gray'
+        edge_alpha = 0.5
+        edge_width = 1
 
-        mid_x = (segment.origin.x + segment.destination.x) / 2
-        mid_y = (segment.origin.y + segment.destination.y) / 2
-        plt.text(mid_x, mid_y, f"{segment.cost:.2f}", fontsize=10, ha='center', color='red')
+        if highlight_nodes and segment.origin in highlight_nodes and segment.destination in highlight_nodes:
+            edge_color = 'green'
+            edge_alpha = 0.8
+            edge_width = 1.5
+
+        ax.annotate('',
+                    xy=(segment.destination.x, segment.destination.y),
+                    xytext=(segment.origin.x, segment.origin.y),
+                    arrowprops=dict(
+                        arrowstyle='->',
+                        color=edge_color,
+                        lw=edge_width,
+                        alpha=edge_alpha,
+                        shrinkA=10,
+                        shrinkB=10
+                    ))
 
     for node in graph.nodes:
-        plt.scatter(node.x, node.y, color='black', s=50)
-        plt.text(node.x, node.y, f" {node.name}", fontsize=12, verticalalignment='bottom')
+        if highlight_nodes and node in highlight_nodes:
+            if node == highlight_nodes[0]:
+                color = 'green'
+                size = 200
+            else:
+                color = 'green'
+                size = 150
+        else:
+            color = 'lightgray'
+            size = 100
 
-    plt.xlabel("X")
-    plt.ylabel("Y")
+        ax.scatter(node.x, node.y, c=color, s=size, zorder=3)
+        ax.text(node.x, node.y, f" {node.name}", fontsize=10, zorder=4)
+
     plt.title(title)
-    plt.grid(True)
+    plt.grid(True, alpha=0.3)
+    plt.tight_layout()
     plt.show()
-
 
 def PlotNode(g, nameOrigin, title="Graph view from node"):
     origin_node = None
@@ -96,7 +119,6 @@ def PlotNode(g, nameOrigin, title="Graph view from node"):
 
         plt.text(mid_x, mid_y, f"{Distance(origin_node, neighbor):.2f}", fontsize=10, ha='center', color='red')
 
-    plt.scatter(origin_node.x, origin_node.y, color='blue', s=100)
 
     for node in g.nodes:
         if node not in origin_node.neighbors and node != origin_node:
@@ -189,17 +211,21 @@ def find_shortest_path(g, origin, destination):
 
 
 def find_reachable_nodes(g, start_node):
+    """Encuentra todos los nodos alcanzables desde un nodo inicial en un grafo dirigido"""
     visited = set()
-    queue = [start_node]
-    visited.add(start_node)
+    stack = [start_node]
 
-    while queue:
-        current_node = queue.pop(0)
+    while stack:
+        current_node = stack.pop()
+        if current_node in visited:
+            continue
 
-        for neighbor in current_node.neighbors:
-            if neighbor not in visited:
-                visited.add(neighbor)
-                queue.append(neighbor)
+        visited.add(current_node)
+
+        for segment in g.segments:
+            if segment.origin == current_node:
+                if segment.destination not in visited:
+                    stack.append(segment.destination)
 
     return list(visited)
 

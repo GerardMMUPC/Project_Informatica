@@ -45,54 +45,31 @@ def Seleccionar_Archivo_Grafo():
 
 def Mostrar_Nodos_Alcanzables():
     node_name = entry_nodo_alcanzable.get()
-    current_graph = None
+    current_graph = graph if graph else custom_graph
 
-    if graph and graph.nodes:
-        current_graph = graph
-    elif custom_graph and custom_graph.nodes:
-        current_graph = custom_graph
-    else:
-        messagebox.showwarning("Advertencia", "No se ha cargado ningún grafo o el grafo está vacío.")
+    if not current_graph.nodes:
+        messagebox.showwarning("Advertencia", "El grafo no contiene nodos")
         return
 
-    start_node = None
-    for node in current_graph.nodes:
-        if node.name == node_name:
-            start_node = node
-            break
+    start_node = next((n for n in current_graph.nodes if n.name == node_name), None)
 
     if not start_node:
-        messagebox.showerror("Error", f"Nodo {node_name} no encontrado en el grafo.")
+        messagebox.showerror("Error", f"Nodo {node_name} no encontrado")
         return
 
     reachable_nodes = find_reachable_nodes(current_graph, start_node)
 
-    reachable_names = ", ".join([node.name for node in reachable_nodes])
-    messagebox.showinfo("Nodos Alcanzables",
-                        f"Nodos alcanzables desde {node_name}:\n{reachable_names}")
+    if len(reachable_nodes) == 1:
+        message = f"Solo el nodo {node_name} es alcanzable (no tiene conexiones salientes)"
+    else:
+        reachable_names = ", ".join([n.name for n in reachable_nodes if n != start_node])
+        message = f"Nodos alcanzables desde {node_name}:\n{reachable_names}"
 
-    plt.figure(figsize=(8, 6))
+    messagebox.showinfo("Resultado", message)
 
-    for segment in current_graph.segments:
-        x_values = [segment.origin.x, segment.destination.x]
-        y_values = [segment.origin.y, segment.destination.y]
-        plt.plot(x_values, y_values, 'k-', linewidth=1, color='gray')
-
-    for node in current_graph.nodes:
-        if node == start_node:
-            plt.scatter(node.x, node.y, color='blue', s=100)
-        elif node in reachable_nodes:
-            plt.scatter(node.x, node.y, color='green', s=80)
-        else:
-            plt.scatter(node.x, node.y, color='lightgray', s=50)
-
-        plt.text(node.x, node.y, f" {node.name}", fontsize=10, verticalalignment='bottom')
-
-    plt.xlabel("X")
-    plt.ylabel("Y")
-    plt.title(f"Nodos alcanzables desde {node_name}")
-    plt.grid(True, alpha=0.3)
-    plt.show()
+    Plot(current_graph,
+         highlight_nodes=reachable_nodes,
+         title=f"Nodos alcanzables desde {node_name}")
 
 def Encontrar_Camino_Mas_Corto():
     origen = entry_camino_origen.get()
