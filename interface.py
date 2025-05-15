@@ -235,8 +235,10 @@ entry_camino_destino = create_entry("Destino:", camino_frame, 1)
 ttk.Button(camino_frame, text="Buscar", command=Encontrar_Camino_Mas_Corto).grid(row=2, column=0, columnspan=2)
 
 try:
+
     window.mainloop()
 
 except KeyboardInterrupt:
+
     print("Application closed.")
 
