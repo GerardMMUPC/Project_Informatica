@@ -4,7 +4,15 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="916c5780-f4e2-4879-894c-afef715314fa" name="Changes" comment="" />
+    <list default="true" id="916c5780-f4e2-4879-894c-afef715314fa" name="Changes" comment="">
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Cat_aer.txt" beforeDir="false" afterPath="$PROJECT_DIR$/Cat_aer.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Cat_nav.txt" beforeDir="false" afterPath="$PROJECT_DIR$/Cat_nav.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Cat_seg.txt" beforeDir="false" afterPath="$PROJECT_DIR$/Cat_seg.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Graph.py" beforeDir="false" afterPath="$PROJECT_DIR$/Graph.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/airSpace.py" beforeDir="false" afterPath="$PROJECT_DIR$/airSpace.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/interface.py" beforeDir="false" afterPath="$PROJECT_DIR$/interface.py" afterDir="false" />
+    </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -29,22 +37,22 @@
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent"><![CDATA[{
-  "keyToString": {
-    "Python.Graph.executor": "Run",
-    "Python.interface.executor": "Run",
-    "Python.test_airSpace.executor": "Run",
-    "Python.test_graph.executor": "Run",
-    "Python.test_navAirpoint.executor": "Run",
-    "Python.test_navPoint.executor": "Run",
-    "Python.test_navSegment.executor": "Run",
-    "Python.test_path.executor": "Run",
-    "RunOnceActivity.ShowReadmeOnStart": "true",
-    "RunOnceActivity.git.unshallow": "true",
-    "git-widget-placeholder": "laiabranch",
-    "last_opened_file_path": "C:/Users/laia1/Desktop/Uni/1r de Carrera/QUATRI 2/INFORMÀTICA I/Projecte_Info_Laia"
+  <component name="PropertiesComponent">{
+  &quot;keyToString&quot;: {
+    &quot;Python.Graph.executor&quot;: &quot;Run&quot;,
+    &quot;Python.interface.executor&quot;: &quot;Run&quot;,
+    &quot;Python.test_airSpace.executor&quot;: &quot;Run&quot;,
+    &quot;Python.test_graph.executor&quot;: &quot;Run&quot;,
+    &quot;Python.test_navAirpoint.executor&quot;: &quot;Run&quot;,
+    &quot;Python.test_navPoint.executor&quot;: &quot;Run&quot;,
+    &quot;Python.test_navSegment.executor&quot;: &quot;Run&quot;,
+    &quot;Python.test_path.executor&quot;: &quot;Run&quot;,
+    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.git.unshallow&quot;: &quot;true&quot;,
+    &quot;git-widget-placeholder&quot;: &quot;laiabranch&quot;,
+    &quot;last_opened_file_path&quot;: &quot;C:/Users/laia1/Desktop/Uni/1r de Carrera/QUATRI 2/INFORMÀTICA I/Projecte_Info_Laia&quot;
   }
-}]]></component>
+}</component>
   <component name="SharedIndexes">
     <attachedChunks>
       <set>

@@ -9,9 +9,6 @@ class AirSpace:
         self.navairports = []
 
     def load_from_files(self, Cat_nav, Cat_seg, Cat_aer): #Populate lists
-        self.read_from_files(Cat_nav, Cat_seg, Cat_aer)
-
-    def read_from_files(self, Cat_nav, Cat_seg, Cat_aer):
         id_to_navpoint = {} #Create empty dictionary
 
         #To load navigation file:

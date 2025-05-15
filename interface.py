@@ -1,57 +1,138 @@
-from tkinter import *
-from tkinter import ttk
-from tkinter import filedialog, messagebox
-from Graph import FileGraph, Plot, PlotNode, AddNode, AddSegment, Graph
+import tkinter as tk
+from tkinter import ttk, filedialog, messagebox
+from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
+from Graph import FileGraph, Plot, PlotNode, AddNode, AddSegment, Graph, find_shortest_path, find_reachable_nodes
 from Node import Node
+import matplotlib.pyplot as plt
 
-window = Tk()
+window = tk.Tk()
 window.title("Editor de Grafos")
 window.configure(bg='#f0f0f0')
 
 frame = ttk.Frame(window, padding=10)
 frame.grid(row=0, column=0, sticky="nsew")
 
-graph = None
 custom_graph = Graph()
+fig = None
+canvas = None
 
-# Funciones de los botones:
+# Entry widgets
+entry_nombre_nodo = entry_x = entry_y = None
+entry_origen = entry_destino = None
+entry_eliminar_nodo = node_entry = None
+entry_nodo_alcanzable = entry_camino_origen = entry_camino_destino = None
+
+plot_frame = ttk.LabelFrame(frame, text="Visualización del Grafo", padding="10")
+plot_frame.grid(row=0, column=2, rowspan=10, padx=10, pady=5, sticky="nsew")
+
+def embed_plot(fig):
+    global canvas
+    for widget in plot_frame.winfo_children():
+        widget.destroy()
+    canvas = FigureCanvasTkAgg(fig, master=plot_frame)
+    canvas.draw()
+    canvas.get_tk_widget().pack(fill='both', expand=True)
 
 def Mostrar_Grafo_Ejemplo():
     from test_graph import CreateGraph_1
-    G1 = CreateGraph_1()
-    Plot(G1, title="Gráfico con nodos y segmentos")
+    G = CreateGraph_1()
+    custom_graph.nodes = G.nodes
+    custom_graph.segments = G.segments
+    fig = Plot(custom_graph, title="Ejemplo 1")
+    embed_plot(fig)
 
 def Mostrar_Grafo_Inventado():
     from test_graph import CreateGraph_2
-    G2 = CreateGraph_2()
-    Plot(G2, title="Mapa de rutas aéreas de EE. UU.")
+    G = CreateGraph_2()
+    custom_graph.nodes = G.nodes
+    custom_graph.segments = G.segments
+    fig = Plot(custom_graph, title="Ejemplo 2")
+    embed_plot(fig)
 
 def Seleccionar_Archivo_Grafo():
-    global graph
-    filename = filedialog.askopenfilename(
-        title="Selecciona un archivo de grafo",
-        filetypes=[("Archivos de texto", "*.txt")]
-    )
+    filename = filedialog.askopenfilename(filetypes=[("Archivos de texto", "*.txt")])
     if not filename:
         return
-    graph = FileGraph(filename)
-    if not graph:
-        messagebox.showerror("Error", "El grafo está vacío o el formato del archivo es incorrecto.")
-        return
-    messagebox.showinfo("Éxito", "Grafo cargado con éxito!")
-    Plot(graph)
-
-def Vecinos_De_Un_Nodo():
-    if graph is None:
-        messagebox.showwarning("Advertencia", "No se ha cargado ningún grafo.")
+    file_graph = FileGraph(filename)
+    if not file_graph or not file_graph.nodes:
+        messagebox.showerror("Error", "Archivo inválido o vacío.")
         return
 
-    node_name = node_entry.get()
-    if not any(node.name == node_name for node in graph.nodes):
-        messagebox.showerror("Error", f"Nodo {node_name} no encontrado en el grafo.")
+    # Use the loaded file graph as the main graph (overriding custom_graph)
+    custom_graph.nodes = file_graph.nodes
+    custom_graph.segments = file_graph.segments
+
+    messagebox.showinfo("Éxito", "Grafo cargado correctamente.")
+    fig = Plot(custom_graph)
+    embed_plot(fig)
+
+def Mostrar_Nodos_Alcanzables():
+    node_name = entry_nodo_alcanzable.get()
+    current_graph = custom_graph
+
+    if not current_graph.nodes:
+        messagebox.showwarning("Advertencia", "No hay nodos en el grafo.")
         return
 
-    PlotNode(graph, node_name, title=f"Grafo con el nodo {node_name} y sus vecinos")
+    start_node = next((n for n in current_graph.nodes if n.name == node_name), None)
+    if not start_node:
+        messagebox.showerror("Error", f"Nodo {node_name} no encontrado.")
+        return
+
+    reachable = find_reachable_nodes(current_graph, start_node)
+    if len(reachable) <= 1:
+        message = f"{node_name} no tiene conexiones salientes."
+    else:
+        names = ", ".join(n.name for n in reachable if n != start_node)
+        message = f"Nodos alcanzables desde {node_name}:\n{names}"
+    messagebox.showinfo("Alcanzables", message)
+
+    fig = Plot(current_graph, highlight_nodes=reachable, title=f"Desde {node_name}")
+    embed_plot(fig)
+
+def Encontrar_Camino_Mas_Corto():
+    origen = entry_camino_origen.get()
+    destino = entry_camino_destino.get()
+    current_graph = custom_graph
+
+    nodo_origen = next((n for n in current_graph.nodes if n.name == origen), None)
+    nodo_destino = next((n for n in current_graph.nodes if n.name == destino), None)
+
+    if not nodo_origen or not nodo_destino:
+        messagebox.showerror("Error", "Nodos no encontrados.")
+        return
+
+    try:
+        camino = find_shortest_path(current_graph, nodo_origen, nodo_destino)
+    except Exception as e:
+        messagebox.showerror("Error", str(e))
+        return
+
+    if not camino:
+        messagebox.showinfo("Resultado", f"No hay camino entre {origen} y {destino}.")
+        return
+
+    names = " → ".join(n.name for n in camino.nodes)
+    messagebox.showinfo("Camino más corto", f"{names}\nCosto total: {camino.cost:.2f}")
+
+    fig, ax = plt.subplots(figsize=(6, 5))
+    for seg in current_graph.segments:
+        ax.plot([seg.origin.x, seg.destination.x],
+                [seg.origin.y, seg.destination.y],
+                'gray', linewidth=1)
+
+    for i in range(len(camino.nodes) - 1):
+        ax.plot([camino.nodes[i].x, camino.nodes[i + 1].x],
+                [camino.nodes[i].y, camino.nodes[i + 1].y],
+                'red', linewidth=2)
+
+    for node in current_graph.nodes:
+        ax.scatter(node.x, node.y, color='green' if node in camino.nodes else 'black')
+        ax.text(node.x, node.y, f" {node.name}", fontsize=10)
+
+    ax.set_title(f"Camino más corto: {origen} → {destino}")
+    ax.grid(True)
+    embed_plot(fig)
 
 def Agregar_Nodo():
     nombre = entry_nombre_nodo.get()
@@ -59,133 +140,98 @@ def Agregar_Nodo():
         x = float(entry_x.get())
         y = float(entry_y.get())
     except ValueError:
-        messagebox.showerror("Error", "Las coordenadas deben ser números.")
+        messagebox.showerror("Error", "Coordenadas inválidas.")
         return
-
-    nodo = Node(nombre, x, y)
-    if AddNode(custom_graph, nodo):
+    if AddNode(custom_graph, Node(nombre, x, y)):
         messagebox.showinfo("Éxito", f"Nodo '{nombre}' agregado.")
     else:
-        messagebox.showwarning("Aviso", f"El nodo '{nombre}' ya existe.")
+        messagebox.showwarning("Duplicado", f"El nodo '{nombre}' ya existe.")
 
 def Agregar_Segmento():
-    origen = entry_origen.get()
-    destino = entry_destino.get()
-    if AddSegment(custom_graph, origen, destino):
-        messagebox.showinfo("Éxito", f"Segmento entre '{origen}' y '{destino}' agregado.")
+    if AddSegment(custom_graph, entry_origen.get(), entry_destino.get()):
+        messagebox.showinfo("Éxito", "Segmento agregado.")
     else:
-        messagebox.showerror("Error", f"No se pudo agregar el segmento. Asegúrate de que ambos nodos existan.")
+        messagebox.showerror("Error", "Asegúrate de que los nodos existan.")
 
 def Eliminar_Nodo():
-
     nombre = entry_eliminar_nodo.get()
     for nodo in custom_graph.nodes:
         if nodo.name == nombre:
-
             custom_graph.segments = [s for s in custom_graph.segments if s.origin.name != nombre and s.destination.name != nombre]
             custom_graph.nodes.remove(nodo)
             messagebox.showinfo("Éxito", f"Nodo '{nombre}' eliminado.")
             return
-    messagebox.showerror("Error", f"No se encontró el nodo '{nombre}' en el grafo.")
-
-
+    messagebox.showerror("Error", f"Nodo '{nombre}' no encontrado.")
 
 def Mostrar_Grafo_Custom():
-    Plot(custom_graph, title="Grafo Personalizado")
+    fig = Plot(custom_graph, title="Grafo Personalizado")
+    embed_plot(fig)
 
 def Guardar_Grafo():
-    filename = filedialog.asksaveasfilename(
-        title="Guardar grafo como",
-        defaultextension=".txt",
-        filetypes=[("Archivos de texto", "*.txt")]
-    )
+    filename = filedialog.asksaveasfilename(defaultextension=".txt", filetypes=[("Archivos de texto", "*.txt")])
     if not filename:
         return
-
     try:
         with open(filename, 'w') as f:
             for node in custom_graph.nodes:
                 f.write(f"{node.name} {int(node.x)} {int(node.y)}\n")
             for seg in custom_graph.segments:
                 f.write(f"{seg.origin.name} {seg.destination.name}\n")
-        messagebox.showinfo("Éxito", f"Grafo guardado en {filename}")
+        messagebox.showinfo("Éxito", "Grafo guardado.")
     except Exception as e:
-        messagebox.showerror("Error", f"No se pudo guardar el archivo: {e}")
+        messagebox.showerror("Error", str(e))
 
-# Etiquetas y botones:
+# --- UI Layouts ---
 
-# Sección de grafo de ejemplo:
-example_frame = ttk.LabelFrame(frame, text="Gráficos de ejemplo", padding="10")
-example_frame.grid(row=0, column=0, sticky="w", padx=10, pady=5)
-Label(example_frame, text="Grafo de ejemplo (paso 3)", font=("Verdana", 12)).grid(row=0, column=0, sticky=W)
-ttk.Button(example_frame, text="Mostrar", command=Mostrar_Grafo_Ejemplo).grid(row=0, column=1)
+def create_entry(label, parent, row):
+    ttk.Label(parent, text=label).grid(row=row, column=0, sticky="w")
+    entry = ttk.Entry(parent)
+    entry.grid(row=row, column=1)
+    return entry
 
-Label(example_frame, text="Grafo inventado (paso 3)", font=("Verdana", 12)).grid(row=1, column=0, sticky=W)
-ttk.Button(example_frame, text="Mostrar", command=Mostrar_Grafo_Inventado).grid(row=1, column=1)
+# Example graphs
+example_frame = ttk.LabelFrame(frame, text="Ejemplos", padding="10")
+example_frame.grid(row=0, column=0, columnspan=2, sticky="ew")
+ttk.Button(example_frame, text="Ejemplo 1", command=Mostrar_Grafo_Ejemplo).grid(row=0, column=0)
+ttk.Button(example_frame, text="Ejemplo 2", command=Mostrar_Grafo_Inventado).grid(row=0, column=1)
+ttk.Button(example_frame, text="Cargar archivo", command=Seleccionar_Archivo_Grafo).grid(row=0, column=2)
 
-Label(example_frame, text="Seleccionar archivo de grafo", font=("Verdana", 12)).grid(row=2, column=0, sticky=W)
-ttk.Button(example_frame, text="Seleccionar", command=Seleccionar_Archivo_Grafo).grid(row=2, column=1)
-
-# Sección de nodo:
+# Add node
 node_frame = ttk.LabelFrame(frame, text="Agregar Nodo", padding="10")
-node_frame.grid(row=1, column=0, sticky="w", padx=10, pady=5)
+node_frame.grid(row=1, column=0, sticky="w")
+entry_nombre_nodo = create_entry("Nombre:", node_frame, 0)
+entry_x = create_entry("X:", node_frame, 1)
+entry_y = create_entry("Y:", node_frame, 2)
+ttk.Button(node_frame, text="Agregar", command=Agregar_Nodo).grid(row=3, column=0, columnspan=2)
 
-Label(node_frame, text="Nombre nodo:").grid(row=0, column=0, sticky=W)
-entry_nombre_nodo = ttk.Entry(node_frame)
-entry_nombre_nodo.grid(row=0, column=1)
-
-Label(node_frame, text="X:").grid(row=1, column=0, sticky=W)
-entry_x = ttk.Entry(node_frame)
-entry_x.grid(row=1, column=1)
-
-Label(node_frame, text="Y:").grid(row=2, column=0, sticky=W)
-entry_y = ttk.Entry(node_frame)
-entry_y.grid(row=2, column=1)
-
-ttk.Button(node_frame, text="Agregar nodo", command=Agregar_Nodo).grid(row=3, column=0, columnspan=2, pady=5)
-
-# Sección de segmento:
+# Add segment
 segment_frame = ttk.LabelFrame(frame, text="Agregar Segmento", padding="10")
-segment_frame.grid(row=2, column=0, sticky="w", padx=10, pady=5)
+segment_frame.grid(row=2, column=0, sticky="w")
+entry_origen = create_entry("Origen:", segment_frame, 0)
+entry_destino = create_entry("Destino:", segment_frame, 1)
+ttk.Button(segment_frame, text="Agregar", command=Agregar_Segmento).grid(row=2, column=0, columnspan=2)
 
-Label(segment_frame, text="Origen:").grid(row=0, column=0, sticky=W)
-entry_origen = ttk.Entry(segment_frame)
-entry_origen.grid(row=0, column=1)
-
-Label(segment_frame, text="Destino:").grid(row=1, column=0, sticky=W)
-entry_destino = ttk.Entry(segment_frame)
-entry_destino.grid(row=1, column=1)
-
-ttk.Button(segment_frame, text="Agregar segmento", command=Agregar_Segmento).grid(row=2, column=0, columnspan=2, pady=5)
-
-# Sección de visualización y guardado:
-action_frame = ttk.LabelFrame(frame, text="Acciones de Grafo", padding="10")
-action_frame.grid(row=3, column=0, sticky="w", padx=10, pady=5)
-
-ttk.Button(action_frame, text="Mostrar grafo personalizado", command=Mostrar_Grafo_Custom).grid(row=0, column=0, pady=5)
-ttk.Button(action_frame, text="Guardar grafo", command=Guardar_Grafo).grid(row=1, column=0, pady=5)
-
-# Sección para ver vecinos del nodo:
-neighbors_frame = ttk.LabelFrame(frame, text="Ver Vecinos de Nodo", padding="10")
-neighbors_frame.grid(row=4, column=0, sticky="w", padx=10, pady=5)
-
-Label(neighbors_frame, text="Nombre del nodo:").grid(row=0, column=0, sticky=W)
-node_entry = ttk.Entry(neighbors_frame)
-node_entry.grid(row=0, column=1)
-
-ttk.Button(neighbors_frame, text="Mostrar vecinos", command=Vecinos_De_Un_Nodo).grid(row=1, column=0, columnspan=2, pady=5)
-
-# Sección para eliminar nodos
+# Delete node
 delete_frame = ttk.LabelFrame(frame, text="Eliminar Nodo", padding="10")
-delete_frame.grid(row=6, column=0, sticky="w", padx=10, pady=5)
+delete_frame.grid(row=3, column=0, sticky="w")
+entry_eliminar_nodo = create_entry("Nombre:", delete_frame, 0)
+ttk.Button(delete_frame, text="Eliminar", command=Eliminar_Nodo).grid(row=1, column=0, columnspan=2)
 
-Label(delete_frame, text="Nombre del nodo a eliminar:").grid(row=0, column=0, sticky=W)
-entry_eliminar_nodo = ttk.Entry(delete_frame)
-entry_eliminar_nodo.grid(row=0, column=1)
+# Plot graph
+ttk.Button(frame, text="Mostrar Grafo Personalizado", command=Mostrar_Grafo_Custom).grid(row=4, column=0, pady=5)
+ttk.Button(frame, text="Guardar Grafo", command=Guardar_Grafo).grid(row=4, column=1)
 
-ttk.Button(delete_frame, text="Eliminar nodo", command=Eliminar_Nodo).grid(row=1, column=0, columnspan=2, pady=5)
+# Reachable nodes
+alcance_frame = ttk.LabelFrame(frame, text="Alcanzables", padding="10")
+alcance_frame.grid(row=5, column=0, sticky="w")
+entry_nodo_alcanzable = create_entry("Desde nodo:", alcance_frame, 0)
+ttk.Button(alcance_frame, text="Mostrar", command=Mostrar_Nodos_Alcanzables).grid(row=1, column=0, columnspan=2)
 
-# Botón de salida:
-ttk.Button(frame, text="Salir", command=window.destroy).grid(row=7, column=0, columnspan=2, pady=10)
+# Shortest path
+camino_frame = ttk.LabelFrame(frame, text="Camino más corto", padding="10")
+camino_frame.grid(row=6, column=0, sticky="w")
+entry_camino_origen = create_entry("Origen:", camino_frame, 0)
+entry_camino_destino = create_entry("Destino:", camino_frame, 1)
+ttk.Button(camino_frame, text="Buscar", command=Encontrar_Camino_Mas_Corto).grid(row=2, column=0, columnspan=2)
 
 window.mainloop()
