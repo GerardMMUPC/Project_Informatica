@@ -4,3 +4,4 @@ class NavPoint:
         self.name = name
         self.latitude = lat
         self.longitude = lon
+        self.neighbors = []

@@ -3,6 +3,7 @@ from tkinter import ttk, filedialog, messagebox
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from Graph import FileGraph, Plot, PlotNode, AddNode, AddSegment, Graph, find_shortest_path, find_reachable_nodes
 from Node import Node
+from airSpace import AirSpace
 import matplotlib.pyplot as plt
 
 window = tk.Tk()
@@ -181,6 +182,14 @@ def Guardar_Grafo():
     except Exception as e:
         messagebox.showerror("Error", str(e))
 
+def plot_navpoints():
+    from airSpace import AirSpace
+    for np in navpoints:
+        plt.plot(np.longitude, np.latitude, "bo", markersize = 3)
+        plt.text(np.longitude, np.latitude, np.name, fontsize = 6, ha = "right", va = "bottom")
+
+
+
 # --- UI Layouts ---
 
 def create_entry(label, parent, row):
@@ -188,6 +197,7 @@ def create_entry(label, parent, row):
     entry = ttk.Entry(parent)
     entry.grid(row=row, column=1)
     return entry
+
 
 # Example graphs
 example_frame = ttk.LabelFrame(frame, text="Ejemplos", padding="10")
@@ -233,5 +243,10 @@ camino_frame.grid(row=6, column=0, sticky="w")
 entry_camino_origen = create_entry("Origen:", camino_frame, 0)
 entry_camino_destino = create_entry("Destino:", camino_frame, 1)
 ttk.Button(camino_frame, text="Buscar", command=Encontrar_Camino_Mas_Corto).grid(row=2, column=0, columnspan=2)
+
+#Navpoint graph
+navpoint_frame = ttk.LabelFrame(frame, text="Grafo Cataluña", padding="10")
+navpoint_frame.grid(row=7, column=0, sticky="w")
+ttk.Button(navpoint_frame, text="Mostrar", command = plot_navpoints).grid(row=0, column=0, columnspan=2)
 
 window.mainloop()

@@ -25,8 +25,11 @@ def test_airspace_loading():
     godox = next((p for p in airspace.navpoints if p.name == "GODOX"), None)
     if godox:
         print(f"\nGODOX found at ({godox.latitude}, {godox.longitude})")
+        print(f"GODOX has {len(godox.neighbors)} neighbors:")
+        for n in godox.neighbors:
+            print("  →", n.name)
     else:
         print("GODOX not found")
 
-if __name__ == "__main__":
-    test_airspace_loading()
+print(test_airspace_loading())
+

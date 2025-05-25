@@ -8,5 +8,4 @@ def test_navsegment():
 
     print(f"Segment from {seg.origin} to {seg.destination} with distance {seg.distance} km")
 
-if __name__ == "__main__":
-    test_navsegment()
+print(test_navsegment())
