@@ -4,36 +4,39 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="f58e142b-492d-4a42-8fb6-46c4cc0362ae" name="Changes" comment="">
-      <change beforePath="$PROJECT_DIR$/.idea/misc.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/misc.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/vcs.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/vcs.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Graph.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Node.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Path.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/README.md" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Segment.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/interface.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/test_graph.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/test_node.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/test_path.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/test_segment.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/text_graph.txt" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/text_graph2.txt" beforeDir="false" />
-    </list>
+    <list default="true" id="916c5780-f4e2-4879-894c-afef715314fa" name="Changes" comment="" />
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
     <option name="LAST_RESOLUTION" value="IGNORE" />
   </component>
+  <component name="FileTemplateManagerImpl">
+    <option name="RECENT_TEMPLATES">
+      <list>
+        <option value="Python Script" />
+      </list>
+    </option>
+  </component>
   <component name="Git.Settings">
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
+    <option name="ROOT_SYNC" value="DONT_SYNC" />
   </component>
-  <component name="ProjectColorInfo"><![CDATA[{
-  "customColor": "",
-  "associatedIndex": 0
+  <component name="GitHubPullRequestSearchHistory"><![CDATA[{
+  "lastFilter": {
+    "state": "OPEN",
+    "assignee": "Priveror"
+  }
 }]]></component>
-  <component name="ProjectId" id="2x5jWVLOPlVPDDZ16ckbnW3bZsv" />
+  <component name="GithubPullRequestsUISettings"><![CDATA[{
+  "selectedUrlAndAccountId": {
+    "url": "https://github.com/GerardMMUPC/Project_Informatica",
+    "accountId": "d83721b8-4bba-4b27-8935-2ff13cedc6ec"
+  }
+}]]></component>
+  <component name="ProjectColorInfo">{
+  &quot;associatedIndex&quot;: 0
+}</component>
+  <component name="ProjectId" id="2vETWiUc5HIvyFLbiZ9N4T4bfxb" />
   <component name="ProjectViewState">
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
@@ -41,12 +44,26 @@
   <component name="PropertiesComponent"><![CDATA[{
   "keyToString": {
     "Python.Graph.executor": "Run",
+    "Python.airSpace.executor": "Run",
     "Python.interface.executor": "Run",
+    "Python.test_airSpace.executor": "Run",
+    "Python.test_graph.executor": "Run",
+    "Python.test_navAirpoint.executor": "Run",
+    "Python.test_navPoint.executor": "Run",
+    "Python.test_navSegment.executor": "Run",
+    "Python.test_path.executor": "Run",
     "RunOnceActivity.ShowReadmeOnStart": "true",
     "RunOnceActivity.git.unshallow": "true",
-    "git-widget-placeholder": "Pol.R__Branch"
+    "git-widget-placeholder": "Pol.R__Branch",
+    "ignore.virus.scanning.warn.message": "true",
+    "last_opened_file_path": "C:/Project_Informatica"
   }
 }]]></component>
+  <component name="RecentsManager">
+    <key name="CopyFile.RECENT_KEYS">
+      <recent name="C:\Uni" />
+    </key>
+  </component>
   <component name="SharedIndexes">
     <attachedChunks>
       <set>
@@ -57,22 +74,12 @@
   <component name="SpellCheckerSettings" RuntimeDictionaries="0" Folders="0" CustomDictionaries="0" DefaultDictionary="application-level" UseSingleDictionary="true" transferred="true" />
   <component name="TaskManager">
     <task active="true" id="Default" summary="Default task">
-      <changelist id="f58e142b-492d-4a42-8fb6-46c4cc0362ae" name="Changes" comment="" />
-      <created>1747234862486</created>
+      <changelist id="916c5780-f4e2-4879-894c-afef715314fa" name="Changes" comment="" />
+      <created>1743709266523</created>
       <option name="number" value="Default" />
       <option name="presentableId" value="Default" />
-      <updated>1747234862486</updated>
+      <updated>1743709266523</updated>
     </task>
     <servers />
-  </component>
-  <component name="XDebuggerManager">
-    <breakpoint-manager>
-      <breakpoints>
-        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
-          <url>file://$PROJECT_DIR$/Project_Informatica-laiabranch/interface.py</url>
-          <option name="timeStamp" value="1" />
-        </line-breakpoint>
-      </breakpoints>
-    </breakpoint-manager>
   </component>
 </project>
