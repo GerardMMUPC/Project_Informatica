@@ -1,7 +1,7 @@
 import tkinter as tk
 from tkinter import ttk, filedialog, messagebox
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
-from Graph import FileGraph, Plot, PlotNode, AddNode, AddSegment, Graph, find_shortest_path, find_reachable_nodes
+from Graph import FileGraph, Plot, PlotNode, AddNode, AddSegment, Graph, find_shortest_path, find_reachable_nodes, PlotWithClickInteraction
 from Node import Node
 from airSpace import AirSpace
 import matplotlib.pyplot as plt
@@ -30,9 +30,36 @@ def embed_plot(fig):
     global canvas
     for widget in plot_frame.winfo_children():
         widget.destroy()
+
     canvas = FigureCanvasTkAgg(fig, master=plot_frame)
     canvas.draw()
     canvas.get_tk_widget().pack(fill='both', expand=True)
+
+    # --- Zoom con rueda del ratón ---
+    def on_scroll(event):
+        ax = fig.gca()  # Obtener el eje actual
+        scale_factor = 1.2 if event.button == 'up' else 0.8  # Zoom in/out
+
+        # Límites actuales de los ejes
+        xlim = ax.get_xlim()
+        ylim = ax.get_ylim()
+
+        # Nuevos límites (centrados en la posición del mouse)
+        new_xlim = [
+            event.xdata - (event.xdata - xlim[0]) * scale_factor,
+            event.xdata + (xlim[1] - event.xdata) * scale_factor
+        ]
+        new_ylim = [
+            event.ydata - (event.ydata - ylim[0]) * scale_factor,
+            event.ydata + (ylim[1] - event.ydata) * scale_factor
+        ]
+
+        ax.set_xlim(new_xlim)
+        ax.set_ylim(new_ylim)
+        canvas.draw()
+
+    # Conectar el evento de scroll
+    fig.canvas.mpl_connect('scroll_event', on_scroll)
 
 def Mostrar_Grafo_Ejemplo():
     from test_graph import CreateGraph_1
@@ -50,16 +77,25 @@ def Mostrar_Grafo_Inventado():
     fig = Plot(custom_graph, title="Ejemplo 2")
     embed_plot(fig)
 
+
 def Seleccionar_Archivo_Grafo():
     filename = filedialog.askopenfilename(filetypes=[("Archivos de texto", "*.txt")])
     if not filename:
         return
-    file_graph = FileGraph(filename)
+
+    # For navigation files, we'll assume they want both nodes and segments
+    if "Cat_nav" in filename:
+        # Find corresponding segments file
+        seg_file = filename.replace("Cat_nav", "Cat_seg")
+        file_graph = FileGraph(filename, seg_file)
+    else:
+        # Regular graph file
+        file_graph = FileGraph(filename)
+
     if not file_graph or not file_graph.nodes:
         messagebox.showerror("Error", "Archivo inválido o vacío.")
         return
 
-    # Use the loaded file graph as the main graph (overriding custom_graph)
     custom_graph.nodes = file_graph.nodes
     custom_graph.segments = file_graph.segments
 
@@ -165,7 +201,7 @@ def Eliminar_Nodo():
     messagebox.showerror("Error", f"Nodo '{nombre}' no encontrado.")
 
 def Mostrar_Grafo_Custom():
-    fig = Plot(custom_graph, title="Grafo Personalizado")
+    fig = PlotWithClickInteraction(custom_graph, title="Grafo Personalizado")
     embed_plot(fig)
 
 def Guardar_Grafo():
@@ -182,13 +218,30 @@ def Guardar_Grafo():
     except Exception as e:
         messagebox.showerror("Error", str(e))
 
+
 def plot_navpoints():
-    from airSpace import AirSpace
-    for np in navpoints:
-        plt.plot(np.longitude, np.latitude, "bo", markersize = 3)
-        plt.text(np.longitude, np.latitude, np.name, fontsize = 6, ha = "right", va = "bottom")
+    try:
+        # Load both nodes and segments
+        nav_graph = FileGraph("Cat_nav.txt", "Cat_seg.txt")
 
+        if not nav_graph or not nav_graph.nodes:
+            messagebox.showerror("Error", "Failed to load navigation data")
+            return
 
+        # Plot the graph with both nodes and segments
+        fig = Plot(nav_graph, title="Navigation Points and Segments of Catalonia")
+
+        # Set reasonable axis limits
+        all_x = [node.x for node in nav_graph.nodes]
+        all_y = [node.y for node in nav_graph.nodes]
+        ax = fig.gca()
+        ax.set_xlim(min(all_x) - 0.5, max(all_x) + 0.5)
+        ax.set_ylim(min(all_y) - 0.5, max(all_y) + 0.5)
+
+        embed_plot(fig)
+
+    except Exception as e:
+        messagebox.showerror("Error", f"Failed to plot navigation points: {str(e)}")
 
 # --- UI Layouts ---
 

@@ -134,46 +134,58 @@ def PlotNode(g, nameOrigin, title="Graph view from node"):
     return fig
 
 
-def FileGraph(filename):
+def FileGraph(nav_filename, seg_filename=None):
     G = Graph()
-    N = []
-    x = []
-    y = []
+    id_to_node = {}  # Map navpoint numbers to Node objects
 
+    # Load nodes from nav file
     try:
-        with open(filename, 'r') as fichero:
-            line = fichero.readline().strip()
-            if not line:
-                return None
-
-            while line != "":
-                if line.startswith("#"):
-                    line = fichero.readline().strip()
+        with open(nav_filename, 'r') as f:
+            for line in f:
+                line = line.strip()
+                if not line or line.startswith("#"):
                     continue
 
-                elementos = line.split()
+                elements = line.split()
+                if len(elements) == 4:  # Format: number name lat lon
+                    try:
+                        number = int(elements[0])
+                        name = elements[1]
+                        lon = float(elements[3])  # Using longitude as x
+                        lat = float(elements[2])  # Using latitude as y
 
-                if len(elementos) == 3:
-                    name = elementos[0]
-                    node_x = int(elementos[1])
-                    node_y = int(elementos[2])
-
-                    node = Node(name, node_x, node_y)
-                    AddNode(G, node)
-
-                    N.append(name)
-                    x.append(node_x)
-                    y.append(node_y)
-
-                elif len(elementos) == 2:
-                    node1_name = elementos[0]
-                    node2_name = elementos[1]
-
-                    AddSegment(G, node1_name, node2_name)
-
-                line = fichero.readline().strip()
+                        node = Node(name, lon, lat)
+                        node.number = number  # Store original number
+                        AddNode(G, node)
+                        id_to_node[number] = node
+                    except ValueError as e:
+                        print(f"Skipping invalid line: {line} - {e}")
     except Exception as e:
-        print(f"Error reading file: {e}")
+        print(f"Error reading nav file: {e}")
+        return None
+
+    # Load segments from seg file if provided
+    if seg_filename:
+        try:
+            with open(seg_filename, 'r') as f:
+                for line in f:
+                    line = line.strip()
+                    if not line or line.startswith("#"):
+                        continue
+
+                    elements = line.split()
+                    if len(elements) == 3:  # Format: origin dest distance
+                        try:
+                            origin = int(elements[0])
+                            dest = int(elements[1])
+
+                            if origin in id_to_node and dest in id_to_node:
+                                AddSegment(G, id_to_node[origin].name, id_to_node[dest].name)
+                        except ValueError as e:
+                            print(f"Skipping invalid segment: {line} - {e}")
+        except Exception as e:
+            print(f"Error reading seg file: {e}")
+
     return G
 
 
@@ -217,3 +229,66 @@ def find_reachable_nodes(g, start_node):
                     stack.append(segment.destination)
 
     return list(visited)
+def PlotWithClickInteraction(graph, title=""):
+    import matplotlib.pyplot as plt
+
+    fig, ax = plt.subplots(figsize=(6, 5))
+    ax.set_title(title)
+    ax.grid(True)
+
+    node_artist_map = {}
+
+    # Dibujar segmentos
+    for seg in graph.segments:
+        ax.plot([seg.origin.x, seg.destination.x],
+                [seg.origin.y, seg.destination.y],
+                'gray', linewidth=1)
+
+    # Dibujar nodos
+    for node in graph.nodes:
+        sc = ax.scatter(node.x, node.y, color='black', picker=True)
+        ax.text(node.x, node.y, f" {node.name}", fontsize=9)
+        node_artist_map[sc] = node
+
+    def on_pick(event):
+        artist = event.artist
+        if artist in node_artist_map:
+            selected_node = node_artist_map[artist]
+            neighbors = [
+                seg.destination for seg in graph.segments if seg.origin == selected_node
+            ] + [
+                seg.origin for seg in graph.segments if seg.destination == selected_node
+            ]
+
+            ax.clear()
+            ax.set_title(f"Vecinos de {selected_node.name}")
+            ax.grid(True)
+
+            # Redibujar segmentos con resaltado
+            for seg in graph.segments:
+                is_connected = (
+                    (seg.origin == selected_node and seg.destination in neighbors) or
+                    (seg.destination == selected_node and seg.origin in neighbors)
+                )
+                color = 'red' if is_connected else 'gray'
+                linewidth = 2 if is_connected else 1
+
+                ax.plot([seg.origin.x, seg.destination.x],
+                        [seg.origin.y, seg.destination.y],
+                        color=color, linewidth=linewidth)
+
+            # Redibujar nodos
+            for node in graph.nodes:
+                if node == selected_node:
+                    color = 'red'
+                elif node in neighbors:
+                    color = 'green'
+                else:
+                    color = 'black'
+                ax.scatter(node.x, node.y, color=color, picker=True)
+                ax.text(node.x, node.y, f" {node.name}", fontsize=9)
+
+            fig.canvas.draw()
+
+    fig.canvas.mpl_connect('pick_event', on_pick)
+    return fig
