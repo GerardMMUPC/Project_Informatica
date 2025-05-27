@@ -2,6 +2,8 @@ from navPoint import NavPoint
 from navSegment import NavSegment
 from navAirpoint import NavAirport
 
+import math
+
 class AirSpace:
     def __init__(self):
         self.navpoints = []
@@ -9,9 +11,6 @@ class AirSpace:
         self.navairports = []
 
     def load_from_files(self, Cat_nav, Cat_seg, Cat_aer): #Populate lists
-        self.read_from_files(Cat_nav, Cat_seg, Cat_aer)
-
-    def read_from_files(self, Cat_nav, Cat_seg, Cat_aer):
         id_to_navpoint = {} #Create empty dictionary
 
         #To load navigation file:
@@ -87,7 +86,88 @@ class AirSpace:
             airport = NavAirport(name, SIDs, STARs)
             self.navairports.append(airport)
 
+        for segment in self.navsegments:
+            origin = id_to_navpoint.get(segment.origin)
+            destination = id_to_navpoint.get(segment.destination)
+            if origin and destination:
+                origin.neighbors.append(destination)
 
+    def neighbour_of(self, start_name):
+        start = None #Find starting navpoint
+        for p in self.navpoints:
+            if p.name == start_name:
+                start = p
+                break
 
+        if start is None:
+            print("Start point not found.")
+            return []
 
+        visited = [] #Avoids reapeting navpoints
+        queue = [] #Not yet visited navpoints
 
+        visited.append(start)
+        queue.append(start)
+
+        while len(queue) > 0:
+            current = queue.pop(0)
+
+            for neighbor in current.neighbors:
+                if neighbor not in visited:
+                    visited.append(neighbor)
+                    queue.append(neighbor)
+
+        return visited
+
+    def find_shortest_path(self, origin_name, destination_name):
+        origin = None
+        destination = None
+
+        for p in self.navpoints:
+            if p.name == origin_name:
+                origin = p
+            if p.name == destination_name:
+                destination = p
+
+        if origin is None or destination is None:
+            print("Origin or destination not found.")
+            return None
+
+        paths = [[origin]]
+        costs = {}
+        costs[origin] = 0
+
+        while len(paths) > 0:
+            #Find path with lowest cost
+            best_path = None
+            best_score = float('inf')
+
+            for path in paths:
+                last_point = path[-1]
+                cost_so_far = costs[last_point]
+                estimate = math.hypot(destination.longitude - last_point.longitude, destination.latitude - last_point.latitude)
+                total_cost = cost_so_far + estimate
+
+                if total_cost < best_score:
+                    best_score = total_cost
+                    best_path = path
+
+            paths.remove(best_path)
+            current = best_path[-1]
+
+            if current == destination:
+                return best_path
+
+            for neighbor in current.neighbors:
+                if neighbor in best_path:
+                    continue  # Skip if already visited in this path
+
+                new_cost = costs[current] + math.hypot(neighbor.longitude - current.longitude, neighbor.latitude - current.latitude)
+
+                if neighbor not in costs or new_cost < costs[neighbor]:
+                    costs[neighbor] = new_cost
+                    new_path = best_path + [neighbor]
+                    paths.append(new_path)
+
+        # If no path was found
+        return None
