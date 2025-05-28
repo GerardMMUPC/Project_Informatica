@@ -3,7 +3,6 @@ from Graph import *
 def CreateGraph_1():
     # Create Graph object
     G1 = Graph()
-
     # Add nodes to the graph (A, B, C, etc.)
     AddNode(G1, Node("A", 1, 20))
     AddNode(G1, Node("B", 8, 17))

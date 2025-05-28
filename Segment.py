@@ -2,7 +2,6 @@ from Node import *
 
 
 class Segment:
-
     def __init__(self, name, origin, destination): # No fiquem cost pq no es un input
         self.name = str(name)
         self.origin = origin

@@ -32,6 +32,3 @@ def Cost_To_Node(Path, node):
 def Plot_Path(graph, Path):
     for i in range(len(Path.nodes) - 1):
         graph.plot_segment(Path.nodes[i], Path.nodes[i + 1], color="blue")
-
-
-
