@@ -9,7 +9,7 @@ class Graph:
         self.segments = []
 
 
-def AddNode(g, n):
+def Añadir_nodo(g, n):
     for node in g.nodes:
         if node.name == n.name:
             return False
@@ -17,7 +17,7 @@ def AddNode(g, n):
     return True
 
 
-def AddSegment(g, name_origin, name_destination):
+def Añadir_segmento(g, name_origin, name_destination):
     origin_node = None
     destination_node = None
 
@@ -39,7 +39,7 @@ def AddSegment(g, name_origin, name_destination):
     return True
 
 
-def GetClosest(g, x, y):
+def Encontrar_mas_cercano(g, x, y):
     if not g.nodes:
         return None
 
@@ -47,7 +47,7 @@ def GetClosest(g, x, y):
     return closest_node
 
 
-def Plot(graph, highlight_path=None, highlight_nodes=None, title="Graph"):
+def Plot(graph, highlight_path=None, highlight_nodes=None, title="Graph", airport_nodes=None):
     fig, ax = plt.subplots(figsize=(10, 8))
 
     for segment in graph.segments:
@@ -73,6 +73,7 @@ def Plot(graph, highlight_path=None, highlight_nodes=None, title="Graph"):
                     ))
 
     for node in graph.nodes:
+        # Color de nodos
         if highlight_nodes and node in highlight_nodes:
             if node == highlight_nodes[0]:
                 color = 'green'
@@ -80,6 +81,9 @@ def Plot(graph, highlight_path=None, highlight_nodes=None, title="Graph"):
             else:
                 color = 'green'
                 size = 150
+        elif airport_nodes and node in airport_nodes:
+            color = 'blue'  # Color diferente para aeropuertos
+            size = 150
         else:
             color = 'lightgray'
             size = 100
@@ -93,7 +97,7 @@ def Plot(graph, highlight_path=None, highlight_nodes=None, title="Graph"):
     return fig
 
 
-def PlotNode(g, nameOrigin, title="Graph view from node"):
+def PlotNodo(g, nameOrigin, title="Graph view from node"):
     origin_node = None
     for node in g.nodes:
         if node.name == nameOrigin:
@@ -134,9 +138,10 @@ def PlotNode(g, nameOrigin, title="Graph view from node"):
     return fig
 
 
-def FileGraph(nav_filename, seg_filename=None):
+def Grafico_fichero(nav_filename, seg_filename=None, aer_filename=None):
     G = Graph()
     id_to_node = {}  # Map navpoint numbers to Node objects
+    airport_nodes = set()  # Encuentra los nodos que son aeropuertos
 
     # Load nodes from nav file
     try:
@@ -147,21 +152,21 @@ def FileGraph(nav_filename, seg_filename=None):
                     continue
 
                 elements = line.split()
-                if len(elements) == 4:  # Format: number name lat lon
+                if len(elements) == 4:  #numero nombre lat lon
                     try:
                         number = int(elements[0])
                         name = elements[1]
-                        lon = float(elements[3])  # Using longitude as x
-                        lat = float(elements[2])  # Using latitude as y
+                        lon = float(elements[3])
+                        lat = float(elements[2])
 
                         node = Node(name, lon, lat)
-                        node.number = number  # Store original number
-                        AddNode(G, node)
+                        node.number = number  #Guardamos el numero del nodo
+                        Añadir_nodo(G, node)
                         id_to_node[number] = node
                     except ValueError as e:
-                        print(f"Skipping invalid line: {line} - {e}")
+                        print(f"Saltando linea invalida: {line} - {e}")
     except Exception as e:
-        print(f"Error reading nav file: {e}")
+        print(f"Error leyendo el fichero de navegación: {e}")
         return None
 
     # Load segments from seg file if provided
@@ -180,27 +185,53 @@ def FileGraph(nav_filename, seg_filename=None):
                             dest = int(elements[1])
 
                             if origin in id_to_node and dest in id_to_node:
-                                AddSegment(G, id_to_node[origin].name, id_to_node[dest].name)
+                                Añadir_segmento(G, id_to_node[origin].name, id_to_node[dest].name)
                         except ValueError as e:
-                            print(f"Skipping invalid segment: {line} - {e}")
+                            print(f"Saltando segmento invalido: {line} - {e}")
         except Exception as e:
-            print(f"Error reading seg file: {e}")
+            print(f"Error leyendo fichero de segmentos: {e}")
 
+    if aer_filename:
+        try:
+            with open(aer_filename, 'r') as f:
+                current_airport = None
+                for line in f:
+                    line = line.strip()
+                    if not line:
+                        continue
+
+                    if not line.endswith(('.D', '.A')):  # It's an airport name
+                        current_airport = line
+                    else:  #Es un punto de navegación (SID,STAR...)
+                        for node in G.nodes: #Encuentra un nodo con el mismo nombre
+                            if node.name == line:
+                                airport_nodes.add(node)
+                                break
+        except Exception as e:
+            print(f"Error leyendo fichero de aeropuertos: {e}")
+
+    G.airport_nodes = airport_nodes
     return G
 
 
-def find_shortest_path(g, origin, destination):
+def Encontrar_camino_mas_corto(g, origin, destination):
     from Path import Path
+
     current_paths = [Path([origin], 0)]
+    g.shortest_path = None
 
     while current_paths:
+        #El bloque inferior encuentra el camino con el menor coste
         current_paths.sort(key=lambda p: p.cost + Distance(p.nodes[-1], destination))
         best_path = current_paths.pop(0)
         last_node = best_path.nodes[-1]
 
+        # Comprovamos si se ha llegado al destino
         if last_node == destination:
+            g.shortest_path = best_path
             return best_path
 
+        # Provamos con los nodos vecinos
         for neighbor in last_node.neighbors:
             if not best_path.contains_node(neighbor):
                 new_path = best_path.copy()
@@ -208,11 +239,12 @@ def find_shortest_path(g, origin, destination):
                 new_path.add_node(neighbor, distance)
                 current_paths.append(new_path)
 
+    # Si no encontramos ningun camino:
+    g.shortest_path = None
     return None
 
 
-def find_reachable_nodes(g, start_node):
-    """Encuentra todos los nodos alcanzables desde un nodo inicial en un grafo dirigido"""
+def Encontrar_nodos_alcanzables(g, start_node):
     visited = set()
     stack = [start_node]
 
@@ -229,7 +261,7 @@ def find_reachable_nodes(g, start_node):
                     stack.append(segment.destination)
 
     return list(visited)
-def PlotWithClickInteraction(graph, title=""):
+def Plot_ratón(graph, title=""):
     import matplotlib.pyplot as plt
 
     fig, ax = plt.subplots(figsize=(6, 5))
@@ -264,7 +296,7 @@ def PlotWithClickInteraction(graph, title=""):
             ax.set_title(f"Vecinos de {selected_node.name}")
             ax.grid(True)
 
-            # Redibujar segmentos con resaltado
+            # Redibujar segmentos resaltados
             for seg in graph.segments:
                 is_connected = (
                     (seg.origin == selected_node and seg.destination in neighbors) or

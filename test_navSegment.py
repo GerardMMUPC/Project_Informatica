@@ -6,6 +6,7 @@ def test_navsegment():
     p2 = NavPoint(6937, "LAMPA", 38.8016666667, 1.9241666667)
     seg = NavSegment(p1, p2, 48.55701)
 
-    print(f"Segment from {seg.origin} to {seg.destination} with distance {seg.distance} km")
+    print(f"Segmento desde {seg.origin} a {seg.destination} con distancia {seg.distance} km")
 
-print(test_navsegment())
+if __name__ == "__main__":
+    test_navsegment()

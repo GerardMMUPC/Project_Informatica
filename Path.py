@@ -1,13 +1,20 @@
-# path.py
-import math
-
 class Path:
     def __init__(self, nodes=None, cost=0):
-        self.nodes = nodes if nodes is not None else []
+        self.nodes = nodes if nodes else []
         self.cost = cost
 
+    def copy(self):
+        return Path(self.nodes.copy(), self.cost)
+
+    def add_node(self, node, distance):
+        self.nodes.append(node)
+        self.cost += distance
+
+    def contains_node(self, node):
+        return node in self.nodes
+
     def __repr__(self):
-        return f"Cost: {self.cost:.2f} -> {[node.name for node in self.nodes]}"
+        return f"Path({[n.name for n in self.nodes]}, cost={self.cost:.2f})"
 
 def Add_Node_Path(Path, node):
     Path.nodes.append(node)

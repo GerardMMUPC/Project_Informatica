@@ -16,4 +16,5 @@ def test_navairport():
     for p in airport.STARs:
         print(f" - {p.name} at ({p.latitude}, {p.longitude})")
 
-print(test_navairport())
+if __name__ == "__main__":
+    test_navairport()

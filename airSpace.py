@@ -10,18 +10,18 @@ class AirSpace:
         self.navsegments = []
         self.navairports = []
 
-    def load_from_files(self, Cat_nav, Cat_seg, Cat_aer): #Populate lists
-        id_to_navpoint = {} #Create empty dictionary
+    def cargar_de_ficheros(self, Cat_nav, Cat_seg, Cat_aer):
+        id_to_navpoint = {}
 
-        #To load navigation file:
+        #Para cargar el fichero de navegación:
         with open(Cat_nav,"r") as file:
             for line in file:
                 elements = line.strip().split()
                 if len(elements) != 4:
-                    print(f"Invalid line: {line.strip()}")
+                    print(f"Linea incorrecta: {line.strip()}")
                     continue
 
-                try: #We use try/except to check variable types
+                try:
                     number = int(elements[0])
                     name = elements[1]
                     lat = float(elements[2])
@@ -31,14 +31,14 @@ class AirSpace:
                     self.navpoints.append(navpoint)
                     id_to_navpoint[number] = navpoint #Save in dictionary
                 except ValueError as ve:
-                    print(f"Bad data: {line.strip()} - {ve}")
+                    print(f"Datos erroneos: {line.strip()} - {ve}")
 
-        #To load segment file:
+        #Cargar fichero de segmentos:
         with open(Cat_seg, "r") as file:
             for line in file:
                 elements = line.strip().split()
                 if len(elements) != 3:
-                    print(f"Invalid line: {line.strip()}")
+                    print(f"Linea incorrecta: {line.strip()}")
                     continue
                 try:
                     origin = int(elements[0])
@@ -49,11 +49,11 @@ class AirSpace:
                         segment = NavSegment(origin, destination, distance)
                         self.navsegments.append(segment)
                     else:
-                        print(f"Navpoint ID not recognised: {origin}, {destination}")
+                        print(f"No se reconoce el ID del navpoint: {origin}, {destination}")
                 except ValueError as ve:
-                    print(f"Bad data: {line.strip()} - {ve}")
+                    print(f"Datos erroneos: {line.strip()} - {ve}")
 
-        #To load airports files:
+        #Cargar ficheros aeropuertos:
         with open(Cat_aer, "r") as file:
             lines = [line.strip() for line in file if line.strip()]
         i = 0
@@ -63,24 +63,22 @@ class AirSpace:
             SIDs = []
             STARs = []
 
-            while i < len(lines) and lines[i].endswith(".D"): #SIDs case
+            while i < len(lines) and lines[i].endswith(".D"): #SID
                 SID_name = lines[i]
-                #We find navpoint match with SID
                 sid = next((p for p in self.navpoints if p.name == SID_name), None)
                 if sid:
                     SIDs.append(sid)
                 else:
-                    print(f"[AIRPORT WARNING] SID '{SID_name}' not found")
+                    print(f"[ADVERTENCIA] SID '{SID_name}' no encontrado")
                 i += 1
 
-            while i < len(lines) and lines[i].endswith(".A"): #STARs case
+            while i < len(lines) and lines[i].endswith(".A"): #STARs
                 star_name = lines[i]
-                # We find navpoint match with STAR
                 star = next((p for p in self.navpoints if p.name == star_name), None)
                 if star:
                     STARs.append(star)
                 else:
-                    print(f"[AIRPORT WARNING] STAR '{star_name}' not found")
+                    print(f"[ADVERTENCIA] STAR '{star_name}' no encontrado")
                 i += 1
 
             airport = NavAirport(name, SIDs, STARs)
@@ -92,19 +90,19 @@ class AirSpace:
             if origin and destination:
                 origin.neighbors.append(destination)
 
-    def neighbour_of(self, start_name):
-        start = None #Find starting navpoint
+    def vecino_de(self, start_name):
+        start = None
         for p in self.navpoints:
             if p.name == start_name:
                 start = p
                 break
 
         if start is None:
-            print("Start point not found.")
+            print("Punto de salida no encontrado")
             return []
 
-        visited = [] #Avoids reapeting navpoints
-        queue = [] #Not yet visited navpoints
+        visited = [] #Para evitar repetir navpoints
+        queue = [] #Navpoints que no hemos visitado
 
         visited.append(start)
         queue.append(start)
@@ -119,7 +117,7 @@ class AirSpace:
 
         return visited
 
-    def find_shortest_path(self, origin_name, destination_name):
+    def encontrar_camino_corto(self, origin_name, destination_name):
         origin = None
         destination = None
 
@@ -138,7 +136,6 @@ class AirSpace:
         costs[origin] = 0
 
         while len(paths) > 0:
-            #Find path with lowest cost
             best_path = None
             best_score = float('inf')
 
@@ -160,7 +157,7 @@ class AirSpace:
 
             for neighbor in current.neighbors:
                 if neighbor in best_path:
-                    continue  # Skip if already visited in this path
+                    continue
 
                 new_cost = costs[current] + math.hypot(neighbor.longitude - current.longitude, neighbor.latitude - current.latitude)
 
@@ -169,11 +166,4 @@ class AirSpace:
                     new_path = best_path + [neighbor]
                     paths.append(new_path)
 
-        # If no path was found
         return None
-
-
-
-
-
-

@@ -2,13 +2,13 @@ from airSpace import AirSpace
 
 def test_airspace_loading():
     airspace = AirSpace()
-    airspace.load_from_files("Cat_nav.txt", "Cat_seg.txt", "Cat_aer.txt")
+    airspace.cargar_de_ficheros("Cat_nav.txt", "Cat_seg.txt", "Cat_aer.txt")
 
     print(f"Loaded {len(airspace.navpoints)} NavPoints")
     print(f"Loaded {len(airspace.navsegments)} NavSegments")
     print(f"Loaded {len(airspace.navairports)} NavAirports")
 
-    # Display a specific airport
+    # Muestra un aeropuerto especifico
     airport = next((a for a in airspace.navairports if a.name == "LEIB"), None)
     if airport:
         print(f"\nAirport: {airport.name}")
@@ -19,17 +19,14 @@ def test_airspace_loading():
         for star in airport.STARs:
             print(f"  {star.name}")
     else:
-        print("LEIB not found")
+        print("LEIB encontrado")
 
-    # Check specific navpoint
+    # Comprovamos un punto especifico
     godox = next((p for p in airspace.navpoints if p.name == "GODOX"), None)
     if godox:
-        print(f"\nGODOX found at ({godox.latitude}, {godox.longitude})")
-        print(f"GODOX has {len(godox.neighbors)} neighbors:")
-        for n in godox.neighbors:
-            print("  →", n.name)
+        print(f"\nGODOX encontrado en: ({godox.latitude}, {godox.longitude})")
     else:
-        print("GODOX not found")
+        print("GODOX no encontrado")
 
-print(test_airspace_loading())
-
+if __name__ == "__main__":
+    test_airspace_loading()

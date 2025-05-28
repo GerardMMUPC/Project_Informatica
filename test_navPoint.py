@@ -7,4 +7,5 @@ def test_navpoint():
     print(f"NavPoint 1: {p1.name} at ({p1.latitude}, {p1.longitude})")
     print(f"NavPoint 2: {p2.name} at ({p2.latitude}, {p2.longitude})")
 
-print(test_navpoint())
+if __name__ == "__main__":
+    test_navpoint()

@@ -22,12 +22,10 @@ p.add_node(nodeB, nodeA.distance(nodeB))
 assert p.contains_node(nodeB) == True
 assert p.cost_to_node(nodeB) >= 0
 
-# Here you would add more extensive testing for plot_path and different paths
+
 print("All path tests passed.")
 
-
-# Reachability (add to graph.py)
-def reachable_nodes(self, start_node):
+def NodosAlcanzables(self, start_node):
     visited = set()
     to_visit = [start_node]
 
@@ -41,4 +39,3 @@ def reachable_nodes(self, start_node):
 
     return visited
 
-# test_graph.py should include tests for find_shortest_path and reachable_nodes
