@@ -6,6 +6,7 @@ from Node import Node
 import matplotlib.pyplot as plt
 from KML import generar_camino_kml
 import os
+from PIL import Image, ImageTk
 
 window = tk.Tk()
 window.title("Editor de Grafos")
@@ -448,6 +449,36 @@ def create_entry(label, parent, row):
     entry.grid(row=row, column=1)
     return entry
 
+def Mostrar_Imagenes():
+    img_window = tk.Toplevel(window)
+    img_window.title("Imágenes de personas")
+
+    image_paths = [
+        "C:/Users/polso/OneDrive/Imágenes/Saved Pictures/IMG-20250528-WA0011.jpg", "C:/Users/polso/OneDrive/Imágenes/Saved Pictures/Screenshot_20250528_200036_Gallery.jpg",
+        "C:/Users/polso/OneDrive/Imágenes/Saved Pictures/IMG_1755.jpg", "C:/Users/polso/OneDrive/Imágenes/Saved Pictures/20250528_195800.jpg"
+
+    ]
+
+    image_refs = []
+
+    for i, path in enumerate(image_paths):
+        try:
+            img = Image.open(path)
+            img = img.resize((150, 150))
+            img_tk = ImageTk.PhotoImage(img)
+            image_refs.append(img_tk)  # evita que se borren por el recolector de basura
+
+            label = ttk.Label(img_window, image=img_tk)
+            label.grid(row=i // 2, column=i % 2, padx=10, pady=10)
+
+        except Exception as e:
+            print(f"Error loading {path}: {e}")
+            label = ttk.Label(img_window, text=f"Error: {path}")
+            label.grid(row=i // 2, column=i % 2)
+
+    img_window.image_refs = image_refs
+
+
 # --- UI Layouts ---
 
 # Graficos de ejemplo
@@ -502,6 +533,8 @@ ttk.Button(frame,
           text="Mostrar Navpoints Sobrevolar",
           command=Mostrar_Navpoints_Sobrevolar,
           style='Common.TButton').grid(row=9, column=0, pady=5)
+boton = ttk.Button(window, text="Mostrar Imágenes del Grupo", command=Mostrar_Imagenes)
+boton.grid(row=1, column=0, padx=20, pady=20)
 
 
 def cerrar_programa():
