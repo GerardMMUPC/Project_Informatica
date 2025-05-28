@@ -1,5 +1,6 @@
-def generar_punto_kml(node, output_file="point.kml"):
-    lon = node.longitude if hasattr(node, 'longitude') else node.x #Comprobamos que tengan los atributos
+def generate_point_kml(node, output_file="point.kml"):
+    #Consigue las cordenadas, sea un punto o navpoint
+    lon = node.longitude if hasattr(node, 'longitude') else node.x
     lat = node.latitude if hasattr(node, 'latitude') else node.y
 
     kml_content = f"""<?xml version="1.0" encoding="UTF-8"?>
@@ -24,7 +25,7 @@ def generar_camino_kml(nodes, output_file="path.kml"):
         coordinates.append(f"{lon},{lat},0")
 
     if not coordinates:
-        raise ValueError("No hay coordenadas validas para exportar a KML")
+        raise ValueError("No hay coordenadas validas a exportar")
 
     kml_content = f"""<?xml version="1.0" encoding="UTF-8"?>
 <kml xmlns="http://www.opengis.net/kml/2.2">

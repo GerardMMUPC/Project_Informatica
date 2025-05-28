@@ -138,38 +138,62 @@ def PlotNodo(g, nameOrigin, title="Graph view from node"):
     return fig
 
 
-def Grafico_fichero(nav_filename, seg_filename=None, aer_filename=None):
+def Grafico_fichero(filename, seg_filename=None, aer_filename=None):
     G = Graph()
-    id_to_node = {}  # Map navpoint numbers to Node objects
-    airport_nodes = set()  # Encuentra los nodos que son aeropuertos
+    airport_nodes = set()
+    parsing_segments = False
+    id_to_node = {}
 
-    # Load nodes from nav file
     try:
-        with open(nav_filename, 'r') as f:
-            for line in f:
+        with open(filename, 'r') as fichero:
+            for line in fichero:
                 line = line.strip()
                 if not line or line.startswith("#"):
+                    if line.strip().lower() == "# segments":
+                        parsing_segments = True
                     continue
 
                 elements = line.split()
-                if len(elements) == 4:  #numero nombre lat lon
+
+                if parsing_segments:
+                    # Parse segments directly from main file
+                    if len(elements) >= 2:
+                        origin = elements[0]
+                        dest = elements[1]
+                        Añadir_segmento(G, origin, dest)
+                    continue
+
+                # Parse nodes
+                if len(elements) == 4:  # Formato: número nombre lat lon
                     try:
                         number = int(elements[0])
                         name = elements[1]
-                        lon = float(elements[3])
                         lat = float(elements[2])
+                        lon = float(elements[3])
 
                         node = Node(name, lon, lat)
-                        node.number = number  #Guardamos el numero del nodo
+                        node.number = number
                         Añadir_nodo(G, node)
                         id_to_node[number] = node
                     except ValueError as e:
-                        print(f"Saltando linea invalida: {line} - {e}")
+                        print(f"Saltando línea inválida: {line} - {e}")
+
+                elif len(elements) == 3:  # Formato alternativo: nombre x y
+                    try:
+                        name = elements[0]
+                        x = float(elements[1])
+                        y = float(elements[2])
+
+                        node = Node(name, x, y)
+                        Añadir_nodo(G, node)
+                    except ValueError as e:
+                        print(f"Saltando línea inválida: {line} - {e}")
+
     except Exception as e:
-        print(f"Error leyendo el fichero de navegación: {e}")
+        print(f"Error leyendo el fichero principal: {e}")
         return None
 
-    # Load segments from seg file if provided
+    # Cargar segmentos desde archivo separado si se proporciona
     if seg_filename:
         try:
             with open(seg_filename, 'r') as f:
@@ -179,7 +203,7 @@ def Grafico_fichero(nav_filename, seg_filename=None, aer_filename=None):
                         continue
 
                     elements = line.split()
-                    if len(elements) == 3:  # Format: origin dest distance
+                    if len(elements) == 3:  # Formato: origin dest distance
                         try:
                             origin = int(elements[0])
                             dest = int(elements[1])
@@ -187,10 +211,11 @@ def Grafico_fichero(nav_filename, seg_filename=None, aer_filename=None):
                             if origin in id_to_node and dest in id_to_node:
                                 Añadir_segmento(G, id_to_node[origin].name, id_to_node[dest].name)
                         except ValueError as e:
-                            print(f"Saltando segmento invalido: {line} - {e}")
+                            print(f"Saltando segmento inválido: {line} - {e}")
         except Exception as e:
             print(f"Error leyendo fichero de segmentos: {e}")
 
+    # Cargar aeropuertos si se proporciona
     if aer_filename:
         try:
             with open(aer_filename, 'r') as f:
@@ -200,10 +225,10 @@ def Grafico_fichero(nav_filename, seg_filename=None, aer_filename=None):
                     if not line:
                         continue
 
-                    if not line.endswith(('.D', '.A')):  # It's an airport name
+                    if not line.endswith(('.D', '.A')):  # Es nombre de aeropuerto
                         current_airport = line
-                    else:  #Es un punto de navegación (SID,STAR...)
-                        for node in G.nodes: #Encuentra un nodo con el mismo nombre
+                    else:  # Es punto de navegación (SID, STAR...)
+                        for node in G.nodes:
                             if node.name == line:
                                 airport_nodes.add(node)
                                 break
@@ -215,13 +240,14 @@ def Grafico_fichero(nav_filename, seg_filename=None, aer_filename=None):
 
 
 def Encontrar_camino_mas_corto(g, origin, destination):
+
     from Path import Path
 
     current_paths = [Path([origin], 0)]
-    g.shortest_path = None
+    g.shortest_path = None  # Clear any previous path
 
     while current_paths:
-        #El bloque inferior encuentra el camino con el menor coste
+        # Buscamos el camino con el coste minimo
         current_paths.sort(key=lambda p: p.cost + Distance(p.nodes[-1], destination))
         best_path = current_paths.pop(0)
         last_node = best_path.nodes[-1]
@@ -231,7 +257,7 @@ def Encontrar_camino_mas_corto(g, origin, destination):
             g.shortest_path = best_path
             return best_path
 
-        # Provamos con los nodos vecinos
+        # Explorar Vecinos
         for neighbor in last_node.neighbors:
             if not best_path.contains_node(neighbor):
                 new_path = best_path.copy()
@@ -239,7 +265,7 @@ def Encontrar_camino_mas_corto(g, origin, destination):
                 new_path.add_node(neighbor, distance)
                 current_paths.append(new_path)
 
-    # Si no encontramos ningun camino:
+    # No se encuentra un camino
     g.shortest_path = None
     return None
 

@@ -11,6 +11,21 @@ window = tk.Tk()
 window.title("Editor de Grafos")
 window.configure(bg='#f0f0f0')
 
+
+style = ttk.Style()
+
+# Estilo común para ambos botones (verde con texto negro)
+style.configure('Common.TButton',
+               foreground='black',       # Texto negro (cambia 'white' a 'black')
+               background='#4CAF50',    # Fondo verde
+               font=('Helvetica', 10, 'bold'),
+               padding=5)
+style.map('Common.TButton',
+          background=[('active', '#45A049'),  # Verde oscuro al pasar el ratón
+                     ('disabled', '#cccccc')],
+          foreground=[('active', 'black'),    # Texto negro incluso al pasar el ratón
+                     ('disabled', '#888888')])  # Texto gris si está deshabilitado
+
 frame = ttk.Frame(window, padding=10)
 frame.grid(row=0, column=0, sticky="nsew")
 
@@ -27,25 +42,45 @@ entry_nodo_alcanzable = entry_camino_origen = entry_camino_destino = None
 plot_frame = ttk.LabelFrame(frame, text="Visualización del Grafo", padding="10")
 plot_frame.grid(row=0, column=2, rowspan=10, padx=10, pady=5, sticky="nsew")
 
+
 def embed_plot(fig):
     global canvas
     for widget in plot_frame.winfo_children():
         widget.destroy()
 
+    ax = fig.gca()
+    original_xlim = ax.get_xlim()
+    original_ylim = ax.get_ylim()
+
+    def reset_zoom():
+        ax.set_xlim(original_xlim)
+        ax.set_ylim(original_ylim)
+        canvas.draw()
+        print("Resetting zoom.")
+
+    # Reset Zoom button con estilo común
+    reset_button = ttk.Button(plot_frame,
+                              text="Reset Zoom",
+                              command=reset_zoom,
+                              style='Common.TButton')
+    reset_button.grid(row=0, column=0, sticky="ew", pady=5)
+
     canvas = FigureCanvasTkAgg(fig, master=plot_frame)
     canvas.draw()
-    canvas.get_tk_widget().pack(fill='both', expand=True)
+    canvas_widget = canvas.get_tk_widget()
+    canvas_widget.grid(row=1, column=0, sticky="nsew")
 
-    # --- Zoom con rueda del ratón ---
-    def on_scroll(event):
-        ax = fig.gca()  # Obtener el eje actual
-        scale_factor = 1.2 if event.button == 'up' else 0.8  # Zoom in/out
+    plot_frame.rowconfigure(1, weight=1)
+    plot_frame.columnconfigure(0, weight=1)
 
-        # Límites actuales de los ejes
+    # Función para manejar zoom con scroll
+    def On_Scroll(event):
+        ax = fig.gca()
+        scale_factor = 1.2 if event.button == 'up' else 0.8
+
         xlim = ax.get_xlim()
         ylim = ax.get_ylim()
 
-        # Nuevos límites (centrados en la posición del mouse)
         new_xlim = [
             event.xdata - (event.xdata - xlim[0]) * scale_factor,
             event.xdata + (xlim[1] - event.xdata) * scale_factor
@@ -59,8 +94,63 @@ def embed_plot(fig):
         ax.set_ylim(new_ylim)
         canvas.draw()
 
-    # Conectar el evento de scroll
-    fig.canvas.mpl_connect('scroll_event', on_scroll)
+    # Función para manejar clics en nodos
+    clicked_nodes = []
+
+    def On_Click(event):
+        if event.inaxes is None:
+            return
+
+        click_x, click_y = event.xdata, event.ydata
+
+        nearest_node = None
+        min_dist = float('inf')
+        for node in custom_graph.nodes:
+            dist = ((node.x - click_x) ** 2 + (node.y - click_y) ** 2) ** 0.5
+            if dist < min_dist and dist < 1.0:
+                min_dist = dist
+                nearest_node = node
+
+        if nearest_node:
+            clicked_nodes.append(nearest_node)
+            print(f"Selected: {nearest_node.name}")
+
+            if len(clicked_nodes) == 2:
+                node1, node2 = clicked_nodes
+                path = Encontrar_camino_mas_corto(custom_graph, node1, node2)
+
+                if path:
+                    fig, ax = plt.subplots(figsize=(8, 6))
+
+                    # Dibujar todos los segmentos en gris
+                    for seg in custom_graph.segments:
+                        ax.plot([seg.origin.x, seg.destination.x],
+                                [seg.origin.y, seg.destination.y],
+                                'gray', linewidth=1, alpha=0.5)
+
+                    # Dibujar el camino en rojo
+                    for i in range(len(path.nodes) - 1):
+                        ax.plot([path.nodes[i].x, path.nodes[i + 1].x],
+                                [path.nodes[i].y, path.nodes[i + 1].y],
+                                'red', linewidth=2)
+
+                    # Dibujar nodos
+                    for node in custom_graph.nodes:
+                        color = 'red' if node in path.nodes else 'gray'
+                        ax.scatter(node.x, node.y, color=color)
+                        ax.text(node.x, node.y, f" {node.name}", fontsize=9)
+
+                    ax.set_title(f"Camino más corto: {node1.name} → {node2.name}")
+                    ax.grid(True)
+                    clicked_nodes.clear()
+                    embed_plot(fig)
+                else:
+                    messagebox.showinfo("Información", "No se encontró camino entre los nodos")
+                    clicked_nodes.clear()
+
+    # Conectar eventos
+    fig.canvas.mpl_connect('scroll_event', On_Scroll)
+    fig.canvas.mpl_connect("button_press_event", On_Click)
 
 def Mostrar_Grafo_Ejemplo():
     from test_graph import CrearGrafo_1
@@ -129,54 +219,54 @@ def Mostrar_Nodos_Alcanzables():
     embed_plot(fig)
 
 
-def Camino_Mas_Corto():
+def Encontrar_Camino_Mas_Corto():
     origen = entry_camino_origen.get().strip()
     destino = entry_camino_destino.get().strip()
 
     if not origen or not destino:
-        messagebox.showwarning("Input Error", "Porfavor, introduzca un punto de origen y destino")
+        messagebox.showwarning("Error input", "Porfavor introducir un origen y un destino")
         return
 
     current_graph = custom_graph
+
 
     nodo_origen = next((n for n in current_graph.nodes if n.name == origen), None)
     nodo_destino = next((n for n in current_graph.nodes if n.name == destino), None)
 
     if not nodo_origen:
-        messagebox.showerror("Error", f"Nodo de origen: '{origen}' no encontrado")
+        messagebox.showerror("Error", f"Nodo de origen '{origen}' no encontrado")
         return
     if not nodo_destino:
-        messagebox.showerror("Error", f"Nodo destinación '{destino}' no encontrado")
+        messagebox.showerror("Error", f"Nodo de destino '{destino}' no encontrado")
         return
 
     try:
-        #Calcula el camino mas corto con la funcion Encontrar_camino_mas_corto
+        #calcular camino
         camino = Encontrar_camino_mas_corto(current_graph, nodo_origen, nodo_destino)
 
         if camino:
-            #Si encuentra un camino envia un mensaje de exito
             names = " → ".join(n.name for n in camino.nodes)
             messagebox.showinfo(
                 "Camino mas corto encontrado",
                 f"{names}\nCoste total: {camino.cost:.2f}"
             )
 
-            #Para visualizar el camino
+            # Visualizar el camino
             fig, ax = plt.subplots(figsize=(8, 6))
 
-            # Dibuja los segmentos restantes en gris
+            # Dibujar segmentos en gris
             for seg in current_graph.segments:
                 ax.plot([seg.origin.x, seg.destination.x],
                         [seg.origin.y, seg.destination.y],
                         'gray', linewidth=1, alpha=0.5)
 
-            # Pinta el recorrido en rojo
+            # Camino en rojo
             for i in range(len(camino.nodes) - 1):
                 ax.plot([camino.nodes[i].x, camino.nodes[i + 1].x],
                         [camino.nodes[i].y, camino.nodes[i + 1].y],
                         'red', linewidth=2)
 
-            # Pinta los nodos del camino en rojo
+            # Dibujar nodos
             for node in current_graph.nodes:
                 color = 'red' if node in camino.nodes else 'gray'
                 ax.scatter(node.x, node.y, color=color)
@@ -191,11 +281,10 @@ def Camino_Mas_Corto():
                 "No se ha encontrado un camino",
                 f"No existe un camino entre {origen} y {destino}"
             )
-
     except Exception as e:
         messagebox.showerror(
-            "Error de calculo",
-            f"Error encontrando el camino mas corto:\n{str(e)}"
+            "Error",
+            f"Error al buscar el camino mas corto:\n{str(e)}"
         )
 
 def Agregar_Nodo():
@@ -246,29 +335,50 @@ def Guardar_Grafo():
         messagebox.showerror("Error", str(e))
 
 
-def plot_navpoints():
-    try:
-        # Carga los nodos y segmentos
-        nav_graph = Grafico_fichero("_nav.txt", "_seg.txt")
+def Mostrar_Navpoints_Sobrevolar():
+    # Verificar si hay un camino calculado
+    if not hasattr(custom_graph, 'shortest_path') or not custom_graph.shortest_path:
+        messagebox.showwarning("Advertencia", "Primero calcule un camino usando 'Camino más corto'")
+        return
 
-        if not nav_graph or not nav_graph.nodes:
-            messagebox.showerror("Error", "Fallo al cargar la información de navegación")
-            return
+    # Obtener nodos del camino
+    nodos_camino = custom_graph.shortest_path.nodes
 
-        #Dibuja el grafo, con la información de los ficheros
-        fig = Plot(nav_graph, title="Custom map")
+    # Crear ventana emergente
+    ventana_navpoints = tk.Toplevel(window)
+    ventana_navpoints.title("Puntos de Navegación Sobrevolar")
+    ventana_navpoints.geometry("500x400")
 
-        # Limites de los ejes
-        all_x = [node.x for node in nav_graph.nodes]
-        all_y = [node.y for node in nav_graph.nodes]
-        ax = fig.gca()
-        ax.set_xlim(min(all_x) - 0.5, max(all_x) + 0.5)
-        ax.set_ylim(min(all_y) - 0.5, max(all_y) + 0.5)
+    # Frame principal con scrollbar
+    frame_principal = ttk.Frame(ventana_navpoints)
+    frame_principal.pack(fill='both', expand=True, padx=10, pady=10)
 
-        embed_plot(fig)
+    # Texto con los puntos
+    texto_navpoints = tk.Text(frame_principal, wrap='word', font=('Courier', 10))
+    scrollbar = ttk.Scrollbar(frame_principal, command=texto_navpoints.yview)
+    texto_navpoints.configure(yscrollcommand=scrollbar.set)
 
-    except Exception as e:
-        messagebox.showerror("Error", f"Fallo al dibujar los puntos de navegación: {str(e)}")
+    scrollbar.pack(side='right', fill='y')
+    texto_navpoints.pack(fill='both', expand=True)
+
+    # Cabecera
+    texto_navpoints.insert('end', "Puntos de navegación en el trayecto:\n\n")
+    texto_navpoints.insert('end', "{:<10} {:<15} {:<15}\n".format("Nombre", "Latitud", "Longitud"))
+    texto_navpoints.insert('end', "-" * 45 + "\n")
+
+    # Lista de puntos con coordenadas
+    for nodo in nodos_camino:
+        texto_navpoints.insert('end', "{:<10} {:<15.6f} {:<15.6f}\n".format(
+            nodo.name, nodo.y, nodo.x  # Nota: y=latitud, x=longitud
+        ))
+
+    texto_navpoints.config(state='disabled')
+
+    # Botón para exportar
+    btn_exportar = ttk.Button(ventana_navpoints,
+                              text="Exportar a KML",
+                              command=Exportar_a_KML)
+    btn_exportar.pack(pady=10)
 
 
 def Exportar_a_KML():
@@ -276,10 +386,9 @@ def Exportar_a_KML():
         messagebox.showwarning("Advertencia", "No hay datos a exportar")
         return
 
-    # Para determinar si exportar todo o un camino
-    elección_exportar = messagebox.askquestion(
+    export_choice = messagebox.askquestion(
         "Opciones de exportación",
-        "¿Exportar todo el grafo? (Si para todos los nodos, No para solo exportar el camino)",
+        "¿Exportar todo el grafo? (Si para todos los nodos, No para el camino actual)",
         icon='question'
     )
 
@@ -292,48 +401,46 @@ def Exportar_a_KML():
         return
 
     try:
-        if elección_exportar == 'si':
-            # Exportar todos los nodos
+        if export_choice == 'yes':
+            # Export all nodes
             generar_camino_kml(custom_graph.nodes, filename)
             messagebox.showinfo(
                 "Exito",
-                f"Se han exportado los {len(custom_graph.nodes)} nodos a:\n{filename}"
+                f"Exportado {len(custom_graph.nodes)} nodos a:\n{filename}"
             )
         else:
-            # Exporta el camino mas corto
+            # Export current path if available
             if hasattr(custom_graph, 'shortest_path') and custom_graph.shortest_path:
                 generar_camino_kml(custom_graph.shortest_path.nodes, filename)
                 messagebox.showinfo(
                     "Exito",
-                    f"Se ha exportado ({len(custom_graph.shortest_path.nodes)} points) a:\n{filename}"
+                    f"Exportado el camino ({len(custom_graph.shortest_path.nodes)} points) a:\n{filename}"
                 )
             else:
                 messagebox.showwarning(
-                    "No se ha seleccionado un camino",
-                    "Porfavor, calcule un camino mas corto usando la interfaz"
+                    "No hay ningun camino",
+                    "Porfavor calcular un camino usando la funcion en la interfaz"
                 )
                 return
 
-        # Abrir en Google Earth
         if messagebox.askyesno(
-                "Abrir en Google Earth",
-                "¿Desea abrir el fichero KML en Google Earth?"
+                "Abrir en google earth",
+                "¿Abrir el fichero en Google earth?"
         ):
             try:
                 os.startfile(filename)
             except Exception as e:
                 messagebox.showerror(
                     "Error",
-                    f"No se ha podido abrir Google Earth:\n{str(e)}"
+                    f"No se pudo abrir en Google Earth:\n{str(e)}"
                 )
 
     except Exception as e:
         messagebox.showerror(
-            "Fallo en la exportación",
-            f"Error al exportar a KML:\n{str(e)}"
+            "Error exportación",
+            f"Error durante exportación a KML:\n{str(e)}"
         )
 
-# --- UI Layouts ---
 
 def create_entry(label, parent, row):
     ttk.Label(parent, text=label).grid(row=row, column=0, sticky="w")
@@ -341,6 +448,7 @@ def create_entry(label, parent, row):
     entry.grid(row=row, column=1)
     return entry
 
+# --- UI Layouts ---
 
 # Graficos de ejemplo
 example_frame = ttk.LabelFrame(frame, text="Ejemplos", padding="10")
@@ -385,9 +493,20 @@ camino_frame = ttk.LabelFrame(frame, text="Camino más corto", padding="10")
 camino_frame.grid(row=6, column=0, sticky="w")
 entry_camino_origen = create_entry("Origen:", camino_frame, 0)
 entry_camino_destino = create_entry("Destino:", camino_frame, 1)
-ttk.Button(camino_frame, text="Buscar", command=Camino_Mas_Corto).grid(row=2, column=0, columnspan=2)
+ttk.Button(camino_frame, text="Buscar", command=Encontrar_Camino_Mas_Corto).grid(row=2, column=0, columnspan=2)
 
 # Exportar a KML
-ttk.Button(frame, text="Exportar a KML", command=Exportar_a_KML).grid(row=8, column=0, pady=5)
+ttk.Button(frame, text="Exportar a KML", command=Exportar_a_KML).grid(row=2, column=1, pady=5)
+
+ttk.Button(frame,
+          text="Mostrar Navpoints Sobrevolar",
+          command=Mostrar_Navpoints_Sobrevolar,
+          style='Common.TButton').grid(row=9, column=0, pady=5)
+
+
+def cerrar_programa():
+    window.destroy()
+
+window.protocol("WM_DELETE_WINDOW", cerrar_programa)
 
 window.mainloop()
