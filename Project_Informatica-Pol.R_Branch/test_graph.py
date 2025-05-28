@@ -84,6 +84,12 @@ if __name__ == "__main__":
     Plot(G2,title="Mapa de rutas aéreas de EE. UU.")
     PlotNodo(G2, "JFK", title="Mapa de rutas aéreas conectados a JFK.")
 
-    #G3 = Grafo 3()
-    #Plot(G3, title="Prueba")
-    #PlotNode(G3, "P", title="Prueba")
+
+def Cargar_Mapa_Catalunya():
+    return Grafico_fichero("Cat_nav.txt", "Cat_seg.txt", "Cat_aer.txt")
+
+def Cargar_Mapa_España():
+    return Grafico_fichero("Spain_nav.txt", "Spain_seg.txt", "Spain_aer.txt")
+
+def Cargar_Mapa_ECAC():
+    return Grafico_fichero("ECAC_nav.txt", "ECAC_seg.txt", "ECAC_aer.txt")

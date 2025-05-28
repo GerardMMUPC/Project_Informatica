@@ -10,11 +10,11 @@ class AirSpace:
         self.navsegments = []
         self.navairports = []
 
-    def cargar_de_ficheros(self, Cat_nav, Cat_seg, Cat_aer):
+    def cargar_de_ficheros(self,_nav,_seg,_aer):
         id_to_navpoint = {}
 
         #Para cargar el fichero de navegación:
-        with open(Cat_nav,"r") as file:
+        with open(_nav,"r") as file:
             for line in file:
                 elements = line.strip().split()
                 if len(elements) != 4:
@@ -27,14 +27,14 @@ class AirSpace:
                     lat = float(elements[2])
                     lon = float(elements[3])
 
-                    navpoint = NavPoint(number, name, lat, lon) #Use class
+                    navpoint = NavPoint(number, name, lat, lon)
                     self.navpoints.append(navpoint)
-                    id_to_navpoint[number] = navpoint #Save in dictionary
+                    id_to_navpoint[number] = navpoint
                 except ValueError as ve:
                     print(f"Datos erroneos: {line.strip()} - {ve}")
 
         #Cargar fichero de segmentos:
-        with open(Cat_seg, "r") as file:
+        with open(_seg, "r") as file:
             for line in file:
                 elements = line.strip().split()
                 if len(elements) != 3:

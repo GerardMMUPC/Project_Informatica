@@ -143,7 +143,6 @@ def Grafico_fichero(nav_filename, seg_filename=None, aer_filename=None):
     id_to_node = {}  # Map navpoint numbers to Node objects
     airport_nodes = set()  # Encuentra los nodos que son aeropuertos
 
-    # Load nodes from nav file
     try:
         with open(nav_filename, 'r') as f:
             for line in f:
@@ -169,7 +168,6 @@ def Grafico_fichero(nav_filename, seg_filename=None, aer_filename=None):
         print(f"Error leyendo el fichero de navegación: {e}")
         return None
 
-    # Load segments from seg file if provided
     if seg_filename:
         try:
             with open(seg_filename, 'r') as f:
@@ -214,14 +212,15 @@ def Grafico_fichero(nav_filename, seg_filename=None, aer_filename=None):
     return G
 
 
-def Encontrar_camino_mas_corto(g, origin, destination):
+def find_shortest_path(g, origin, destination):
+
     from Path import Path
 
     current_paths = [Path([origin], 0)]
-    g.shortest_path = None
+    g.shortest_path = None  # Clear any previous path
 
     while current_paths:
-        #El bloque inferior encuentra el camino con el menor coste
+        # Buscamos el camino con el coste minimo
         current_paths.sort(key=lambda p: p.cost + Distance(p.nodes[-1], destination))
         best_path = current_paths.pop(0)
         last_node = best_path.nodes[-1]
@@ -231,7 +230,7 @@ def Encontrar_camino_mas_corto(g, origin, destination):
             g.shortest_path = best_path
             return best_path
 
-        # Provamos con los nodos vecinos
+        # Explorar Vecinos
         for neighbor in last_node.neighbors:
             if not best_path.contains_node(neighbor):
                 new_path = best_path.copy()
@@ -239,7 +238,7 @@ def Encontrar_camino_mas_corto(g, origin, destination):
                 new_path.add_node(neighbor, distance)
                 current_paths.append(new_path)
 
-    # Si no encontramos ningun camino:
+    # No se encuentra un camino
     g.shortest_path = None
     return None
 

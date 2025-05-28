@@ -1,11 +1,12 @@
 import tkinter as tk
 from tkinter import ttk, filedialog, messagebox
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
-from Graph import Grafico_fichero, Plot, Añadir_nodo, Añadir_segmento, Graph, Encontrar_camino_mas_corto, Encontrar_nodos_alcanzables, Plot_ratón
+from Graph import Grafico_fichero, Plot, Añadir_nodo, Añadir_segmento, Graph, find_shortest_path, Encontrar_nodos_alcanzables, Plot_ratón
 from Node import Node
 import matplotlib.pyplot as plt
-from KML import generar_camino_kml
+from KML import generate_path_kml
 import os
+from test_graph import Cargar_Mapa_Catalunya, Cargar_Mapa_España, Cargar_Mapa_ECAC
 
 window = tk.Tk()
 window.title("Editor de Grafos")
@@ -129,54 +130,54 @@ def Mostrar_Nodos_Alcanzables():
     embed_plot(fig)
 
 
-def Camino_Mas_Corto():
+def Encontrar_Camino_Mas_Corto():
     origen = entry_camino_origen.get().strip()
     destino = entry_camino_destino.get().strip()
 
     if not origen or not destino:
-        messagebox.showwarning("Input Error", "Porfavor, introduzca un punto de origen y destino")
+        messagebox.showwarning("Error input", "Porfavor introducir un origen y un destino")
         return
 
     current_graph = custom_graph
+
 
     nodo_origen = next((n for n in current_graph.nodes if n.name == origen), None)
     nodo_destino = next((n for n in current_graph.nodes if n.name == destino), None)
 
     if not nodo_origen:
-        messagebox.showerror("Error", f"Nodo de origen: '{origen}' no encontrado")
+        messagebox.showerror("Error", f"Nodo de origen '{origen}' no encontrado")
         return
     if not nodo_destino:
-        messagebox.showerror("Error", f"Nodo destinación '{destino}' no encontrado")
+        messagebox.showerror("Error", f"Nodo de destino '{destino}' no encontrado")
         return
 
     try:
-        #Calcula el camino mas corto con la funcion Encontrar_camino_mas_corto
-        camino = Encontrar_camino_mas_corto(current_graph, nodo_origen, nodo_destino)
+        #calcular camino
+        camino = find_shortest_path(current_graph, nodo_origen, nodo_destino)
 
         if camino:
-            #Si encuentra un camino envia un mensaje de exito
             names = " → ".join(n.name for n in camino.nodes)
             messagebox.showinfo(
                 "Camino mas corto encontrado",
                 f"{names}\nCoste total: {camino.cost:.2f}"
             )
 
-            #Para visualizar el camino
+            # Visualizar el camino
             fig, ax = plt.subplots(figsize=(8, 6))
 
-            # Dibuja los segmentos restantes en gris
+            # Dibujar segmentos en gris
             for seg in current_graph.segments:
                 ax.plot([seg.origin.x, seg.destination.x],
                         [seg.origin.y, seg.destination.y],
                         'gray', linewidth=1, alpha=0.5)
 
-            # Pinta el recorrido en rojo
+            # Camino en rojo
             for i in range(len(camino.nodes) - 1):
                 ax.plot([camino.nodes[i].x, camino.nodes[i + 1].x],
                         [camino.nodes[i].y, camino.nodes[i + 1].y],
                         'red', linewidth=2)
 
-            # Pinta los nodos del camino en rojo
+            # Dibujar nodos
             for node in current_graph.nodes:
                 color = 'red' if node in camino.nodes else 'gray'
                 ax.scatter(node.x, node.y, color=color)
@@ -194,8 +195,8 @@ def Camino_Mas_Corto():
 
     except Exception as e:
         messagebox.showerror(
-            "Error de calculo",
-            f"Error encontrando el camino mas corto:\n{str(e)}"
+            "Error",
+            f"Error al buscar el camino mas corto:\n{str(e)}"
         )
 
 def Agregar_Nodo():
@@ -271,15 +272,64 @@ def plot_navpoints():
         messagebox.showerror("Error", f"Fallo al dibujar los puntos de navegación: {str(e)}")
 
 
-def Exportar_a_KML():
+def Mostrar_Mapa_Aereo():
+    # Crear ventana de selección
+    selection_win = tk.Toplevel(window)
+    selection_win.title("Seleccionar Mapa Aéreo")
+    selection_win.geometry("300x150")
+
+    # Definir las funciones de carga primero
+    def cargar_catalunya():
+        try:
+            graph = Cargar_Mapa_Catalunya()
+            mostrar_mapa(graph, "Mapa Aéreo de Catalunya")
+        except Exception as e:
+            messagebox.showerror("Error", f"Error al cargar mapa: {str(e)}")
+        finally:
+            selection_win.destroy()
+
+    def cargar_espana():
+        try:
+            graph = Cargar_Mapa_España()
+            mostrar_mapa(graph, "Mapa Aéreo de España")
+        except Exception as e:
+            messagebox.showerror("Error", f"Error al cargar mapa: {str(e)}")
+        finally:
+            selection_win.destroy()
+
+    def cargar_ecac():
+        try:
+            graph = Cargar_Mapa_ECAC()
+            mostrar_mapa(graph, "Mapa Aéreo ECAC")
+        except Exception as e:
+            messagebox.showerror("Error", f"Error al cargar mapa: {str(e)}")
+        finally:
+            selection_win.destroy()
+
+    # Función auxiliar para mostrar el mapa
+    def mostrar_mapa(graph, title):
+        if graph and graph.nodes:
+            custom_graph.nodes = graph.nodes
+            custom_graph.segments = graph.segments
+            custom_graph.airport_nodes = getattr(graph, 'airport_nodes', set())
+            fig = Plot(custom_graph, title=title, airport_nodes=custom_graph.airport_nodes)
+            embed_plot(fig)
+        else:
+            messagebox.showerror("Error", "No se pudo cargar el mapa seleccionado.")
+
+    # Crear botones
+    ttk.Button(selection_win, text="Catalunya", command=cargar_catalunya).pack(pady=10)
+    ttk.Button(selection_win, text="España", command=cargar_espana).pack(pady=10)
+    ttk.Button(selection_win, text="ECAC", command=cargar_ecac).pack(pady=10)
+
+def Export_To_KML():
     if not hasattr(custom_graph, 'nodes') or not custom_graph.nodes:
         messagebox.showwarning("Advertencia", "No hay datos a exportar")
         return
 
-    # Para determinar si exportar todo o un camino
-    elección_exportar = messagebox.askquestion(
+    export_choice = messagebox.askquestion(
         "Opciones de exportación",
-        "¿Exportar todo el grafo? (Si para todos los nodos, No para solo exportar el camino)",
+        "¿Exportar todo el grafo? (Si para todos los nodos, No para el camino actual)",
         icon='question'
     )
 
@@ -292,45 +342,42 @@ def Exportar_a_KML():
         return
 
     try:
-        if elección_exportar == 'si':
-            # Exportar todos los nodos
-            generar_camino_kml(custom_graph.nodes, filename)
+        if export_choice == 'yes':
+            generate_path_kml(custom_graph.nodes, filename)
             messagebox.showinfo(
                 "Exito",
-                f"Se han exportado los {len(custom_graph.nodes)} nodos a:\n{filename}"
+                f"Exportado {len(custom_graph.nodes)} nodos a:\n{filename}"
             )
         else:
-            # Exporta el camino mas corto
             if hasattr(custom_graph, 'shortest_path') and custom_graph.shortest_path:
-                generar_camino_kml(custom_graph.shortest_path.nodes, filename)
+                generate_path_kml(custom_graph.shortest_path.nodes, filename)
                 messagebox.showinfo(
                     "Exito",
-                    f"Se ha exportado ({len(custom_graph.shortest_path.nodes)} points) a:\n{filename}"
+                    f"Exportado el camino ({len(custom_graph.shortest_path.nodes)} points) a:\n{filename}"
                 )
             else:
                 messagebox.showwarning(
-                    "No se ha seleccionado un camino",
-                    "Porfavor, calcule un camino mas corto usando la interfaz"
+                    "No hay ningun camino",
+                    "Porfavor calcular un camino usando la funcion en la interfaz"
                 )
                 return
 
-        # Abrir en Google Earth
         if messagebox.askyesno(
-                "Abrir en Google Earth",
-                "¿Desea abrir el fichero KML en Google Earth?"
+                "Abrir en google earth",
+                "¿Abrir el fichero en Google earth?"
         ):
             try:
                 os.startfile(filename)
             except Exception as e:
                 messagebox.showerror(
                     "Error",
-                    f"No se ha podido abrir Google Earth:\n{str(e)}"
+                    f"No se pudo abrir en Google Earth:\n{str(e)}"
                 )
 
     except Exception as e:
         messagebox.showerror(
-            "Fallo en la exportación",
-            f"Error al exportar a KML:\n{str(e)}"
+            "Error exportación",
+            f"Error durante exportación a KML:\n{str(e)}"
         )
 
 # --- UI Layouts ---
@@ -371,8 +418,8 @@ entry_eliminar_nodo = create_entry("Nombre:", delete_frame, 0)
 ttk.Button(delete_frame, text="Eliminar", command=Eliminar_Nodo).grid(row=1, column=0, columnspan=2)
 
 # Dibujar grafo
-ttk.Button(frame, text="Mostrar Grafo Personalizado", command=Mostrar_Grafo_Custom).grid(row=4, column=0, pady=5)
-ttk.Button(frame, text="Guardar Grafo", command=Guardar_Grafo).grid(row=4, column=1)
+ttk.Button(frame, text="Mostrar Grafo Personalizado", command=Mostrar_Grafo_Custom).grid(row=1, column=1, pady=5)
+ttk.Button(frame, text="Guardar Grafo", command=Guardar_Grafo).grid(row=2, column=1)
 
 # Nodos alcanzables
 alcance_frame = ttk.LabelFrame(frame, text="Alcanzables", padding="10")
@@ -385,9 +432,12 @@ camino_frame = ttk.LabelFrame(frame, text="Camino más corto", padding="10")
 camino_frame.grid(row=6, column=0, sticky="w")
 entry_camino_origen = create_entry("Origen:", camino_frame, 0)
 entry_camino_destino = create_entry("Destino:", camino_frame, 1)
-ttk.Button(camino_frame, text="Buscar", command=Camino_Mas_Corto).grid(row=2, column=0, columnspan=2)
+ttk.Button(camino_frame, text="Buscar", command=Encontrar_Camino_Mas_Corto).grid(row=2, column=0, columnspan=2)
 
 # Exportar a KML
-ttk.Button(frame, text="Exportar a KML", command=Exportar_a_KML).grid(row=8, column=0, pady=5)
+ttk.Button(frame, text="Exportar a KML", command=Export_To_KML).grid(row=3, column=1, pady=5)
+
+# Mostrar mapas aereos
+ttk.Button(example_frame, text="Mapas Aéreos", command=Mostrar_Mapa_Aereo).grid(row=0, column=3, padx=5)
 
 window.mainloop()
