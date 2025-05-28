@@ -1,4 +1,3 @@
-from Node import*
 from Segment import*
 
 n1 = Node('aaa', 0, 0)

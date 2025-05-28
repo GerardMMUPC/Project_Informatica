@@ -1,7 +1,3 @@
-# path.py
-import math
-
-
 class Path:
     def __init__(self, nodes=None, cost=0):
         self.nodes = nodes if nodes else []

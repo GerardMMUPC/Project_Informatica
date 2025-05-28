@@ -1,11 +1,10 @@
 import tkinter as tk
 from tkinter import ttk, filedialog, messagebox
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
-from Graph import FileGraph, Plot, PlotNode, AddNode, AddSegment, Graph, find_shortest_path, find_reachable_nodes, PlotWithClickInteraction
+from Graph import Grafico_fichero, Plot, Añadir_nodo, Añadir_segmento, Graph, Encontrar_camino_mas_corto, Encontrar_nodos_alcanzables, Plot_ratón
 from Node import Node
-from airSpace import AirSpace
 import matplotlib.pyplot as plt
-from KML import generate_point_kml, generate_path_kml
+from KML import generar_camino_kml
 import os
 
 window = tk.Tk()
@@ -64,16 +63,16 @@ def embed_plot(fig):
     fig.canvas.mpl_connect('scroll_event', on_scroll)
 
 def Mostrar_Grafo_Ejemplo():
-    from test_graph import CreateGraph_1
-    G = CreateGraph_1()
+    from test_graph import CrearGrafo_1
+    G = CrearGrafo_1()
     custom_graph.nodes = G.nodes
     custom_graph.segments = G.segments
     fig = Plot(custom_graph, title="Ejemplo 1")
     embed_plot(fig)
 
 def Mostrar_Grafo_Inventado():
-    from test_graph import CreateGraph_2
-    G = CreateGraph_2()
+    from test_graph import CrearGrafo_2
+    G = CrearGrafo_2()
     custom_graph.nodes = G.nodes
     custom_graph.segments = G.segments
     fig = Plot(custom_graph, title="Ejemplo 2")
@@ -85,14 +84,13 @@ def Seleccionar_Archivo_Grafo():
     if not filename:
         return
 
-    # For navigation files, we'll assume they want both nodes and segments
     if "_nav" in filename:
-        # Find corresponding segments file
         seg_file = filename.replace("_nav", "_seg")
-        file_graph = FileGraph(filename, seg_file)
+        aer_file = filename.replace("_nav", "_aer")
+        file_graph = Grafico_fichero(filename, seg_file, aer_file)
     else:
-        # Regular graph file
-        file_graph = FileGraph(filename)
+        #Si no hay ficheros, genera un grafo corriente
+        file_graph = Grafico_fichero(filename)
 
     if not file_graph or not file_graph.nodes:
         messagebox.showerror("Error", "Archivo inválido o vacío.")
@@ -100,9 +98,10 @@ def Seleccionar_Archivo_Grafo():
 
     custom_graph.nodes = file_graph.nodes
     custom_graph.segments = file_graph.segments
+    custom_graph.airport_nodes = getattr(file_graph, 'airport_nodes', set())
 
     messagebox.showinfo("Éxito", "Grafo cargado correctamente.")
-    fig = Plot(custom_graph)
+    fig = Plot(custom_graph, airport_nodes=custom_graph.airport_nodes)
     embed_plot(fig)
 
 def Mostrar_Nodos_Alcanzables():
@@ -118,7 +117,7 @@ def Mostrar_Nodos_Alcanzables():
         messagebox.showerror("Error", f"Nodo {node_name} no encontrado.")
         return
 
-    reachable = find_reachable_nodes(current_graph, start_node)
+    reachable = Encontrar_nodos_alcanzables(current_graph, start_node)
     if len(reachable) <= 1:
         message = f"{node_name} no tiene conexiones salientes."
     else:
@@ -130,75 +129,73 @@ def Mostrar_Nodos_Alcanzables():
     embed_plot(fig)
 
 
-def Encontrar_Camino_Mas_Corto():
-    """Find and display shortest path between nodes"""
+def Camino_Mas_Corto():
     origen = entry_camino_origen.get().strip()
     destino = entry_camino_destino.get().strip()
 
     if not origen or not destino:
-        messagebox.showwarning("Input Error", "Please enter both origin and destination")
+        messagebox.showwarning("Input Error", "Porfavor, introduzca un punto de origen y destino")
         return
 
     current_graph = custom_graph
 
-    # Find nodes by name
     nodo_origen = next((n for n in current_graph.nodes if n.name == origen), None)
     nodo_destino = next((n for n in current_graph.nodes if n.name == destino), None)
 
     if not nodo_origen:
-        messagebox.showerror("Error", f"Origin node '{origen}' not found")
+        messagebox.showerror("Error", f"Nodo de origen: '{origen}' no encontrado")
         return
     if not nodo_destino:
-        messagebox.showerror("Error", f"Destination node '{destino}' not found")
+        messagebox.showerror("Error", f"Nodo destinación '{destino}' no encontrado")
         return
 
     try:
-        # Calculate path (this will store it in current_graph.shortest_path)
-        camino = find_shortest_path(current_graph, nodo_origen, nodo_destino)
+        #Calcula el camino mas corto con la funcion Encontrar_camino_mas_corto
+        camino = Encontrar_camino_mas_corto(current_graph, nodo_origen, nodo_destino)
 
         if camino:
-            # Show success message
+            #Si encuentra un camino envia un mensaje de exito
             names = " → ".join(n.name for n in camino.nodes)
             messagebox.showinfo(
-                "Shortest Path Found",
-                f"{names}\nTotal cost: {camino.cost:.2f}"
+                "Camino mas corto encontrado",
+                f"{names}\nCoste total: {camino.cost:.2f}"
             )
 
-            # Visualize the path
+            #Para visualizar el camino
             fig, ax = plt.subplots(figsize=(8, 6))
 
-            # Draw all segments in gray
+            # Dibuja los segmentos restantes en gris
             for seg in current_graph.segments:
                 ax.plot([seg.origin.x, seg.destination.x],
                         [seg.origin.y, seg.destination.y],
                         'gray', linewidth=1, alpha=0.5)
 
-            # Highlight the path in red
+            # Pinta el recorrido en rojo
             for i in range(len(camino.nodes) - 1):
                 ax.plot([camino.nodes[i].x, camino.nodes[i + 1].x],
                         [camino.nodes[i].y, camino.nodes[i + 1].y],
                         'red', linewidth=2)
 
-            # Draw nodes
+            # Pinta los nodos del camino en rojo
             for node in current_graph.nodes:
-                color = 'red' if node in camino.nodes else 'black'
+                color = 'red' if node in camino.nodes else 'gray'
                 ax.scatter(node.x, node.y, color=color)
                 ax.text(node.x, node.y, f" {node.name}", fontsize=9)
 
-            ax.set_title(f"Shortest Path: {origen} → {destino}")
+            ax.set_title(f"Camino mas corto: {origen} → {destino}")
             ax.grid(True)
             embed_plot(fig)
 
         else:
             messagebox.showinfo(
-                "No Path Found",
-                f"No path exists between {origen} and {destino}"
+                "No se ha encontrado un camino",
+                f"No existe un camino entre {origen} y {destino}"
             )
 
     except Exception as e:
         messagebox.showerror(
-            "Calculation Error",
-            f"Error finding shortest path:\n{str(e)}"
+            "Error de calculo",
+            f"Error encontrando el camino mas corto:\n{str(e)}"
         )
 
 def Agregar_Nodo():
@@ -209,13 +206,13 @@ def Agregar_Nodo():
     except ValueError:
         messagebox.showerror("Error", "Coordenadas inválidas.")
         return
-    if AddNode(custom_graph, Node(nombre, x, y)):
+    if Añadir_nodo(custom_graph, Node(nombre, x, y)):
         messagebox.showinfo("Éxito", f"Nodo '{nombre}' agregado.")
     else:
         messagebox.showwarning("Duplicado", f"El nodo '{nombre}' ya existe.")
 
 def Agregar_Segmento():
-    if AddSegment(custom_graph, entry_origen.get(), entry_destino.get()):
+    if Añadir_segmento(custom_graph, entry_origen.get(), entry_destino.get()):
         messagebox.showinfo("Éxito", "Segmento agregado.")
     else:
         messagebox.showerror("Error", "Asegúrate de que los nodos existan.")
@@ -231,7 +228,7 @@ def Eliminar_Nodo():
     messagebox.showerror("Error", f"Nodo '{nombre}' no encontrado.")
 
 def Mostrar_Grafo_Custom():
-    fig = PlotWithClickInteraction(custom_graph, title="Grafo Personalizado")
+    fig = Plot_ratón(custom_graph, title="Grafo Personalizado")
     embed_plot(fig)
 
 def Guardar_Grafo():
@@ -251,17 +248,17 @@ def Guardar_Grafo():
 
 def plot_navpoints():
     try:
-        # Load both nodes and segments
-        nav_graph = FileGraph("_nav.txt", "_seg.txt")
+        # Carga los nodos y segmentos
+        nav_graph = Grafico_fichero("_nav.txt", "_seg.txt")
 
         if not nav_graph or not nav_graph.nodes:
-            messagebox.showerror("Error", "Failed to load navigation data")
+            messagebox.showerror("Error", "Fallo al cargar la información de navegación")
             return
 
-        # Plot the graph with both nodes and segments
+        #Dibuja el grafo, con la información de los ficheros
         fig = Plot(nav_graph, title="Custom map")
 
-        # Set reasonable axis limits
+        # Limites de los ejes
         all_x = [node.x for node in nav_graph.nodes]
         all_y = [node.y for node in nav_graph.nodes]
         ax = fig.gca()
@@ -271,76 +268,70 @@ def plot_navpoints():
         embed_plot(fig)
 
     except Exception as e:
-        messagebox.showerror("Error", f"Failed to plot navigation points: {str(e)}")
+        messagebox.showerror("Error", f"Fallo al dibujar los puntos de navegación: {str(e)}")
 
 
-def Export_To_KML():
-    """Handle KML export with options for full graph or selected path"""
+def Exportar_a_KML():
     if not hasattr(custom_graph, 'nodes') or not custom_graph.nodes:
-        messagebox.showwarning("Warning", "No graph data available to export")
+        messagebox.showwarning("Advertencia", "No hay datos a exportar")
         return
 
-    # Determine what to export
-    export_choice = messagebox.askquestion(
-        "Export Options",
-        "Export entire graph? (Yes for all nodes, No for current path)",
+    # Para determinar si exportar todo o un camino
+    elección_exportar = messagebox.askquestion(
+        "Opciones de exportación",
+        "¿Exportar todo el grafo? (Si para todos los nodos, No para solo exportar el camino)",
         icon='question'
     )
 
-    # Get save location
     filename = filedialog.asksaveasfilename(
         defaultextension=".kml",
         filetypes=[("KML Files", "*.kml")],
-        title="Save KML File"
+        title="Guardar fichero KML"
     )
     if not filename:
         return
 
     try:
-        if export_choice == 'yes':
-            # Export all nodes
-            generate_path_kml(custom_graph.nodes, filename)
+        if elección_exportar == 'si':
+            # Exportar todos los nodos
+            generar_camino_kml(custom_graph.nodes, filename)
             messagebox.showinfo(
-                "Success",
-                f"Exported {len(custom_graph.nodes)} nodes to:\n{filename}"
+                "Exito",
+                f"Se han exportado los {len(custom_graph.nodes)} nodos a:\n{filename}"
             )
         else:
-            # Export current path if available
+            # Exporta el camino mas corto
             if hasattr(custom_graph, 'shortest_path') and custom_graph.shortest_path:
-                generate_path_kml(custom_graph.shortest_path.nodes, filename)
+                generar_camino_kml(custom_graph.shortest_path.nodes, filename)
                 messagebox.showinfo(
-                    "Success",
-                    f"Exported path ({len(custom_graph.shortest_path.nodes)} points) to:\n{filename}"
+                    "Exito",
+                    f"Se ha exportado ({len(custom_graph.shortest_path.nodes)} points) a:\n{filename}"
                 )
             else:
                 messagebox.showwarning(
-                    "No Path Selected",
-                    "Please calculate a path first using 'Shortest Path' function"
+                    "No se ha seleccionado un camino",
+                    "Porfavor, calcule un camino mas corto usando la interfaz"
                 )
                 return
 
-        # Offer to open in Google Earth
+        # Abrir en Google Earth
         if messagebox.askyesno(
-                "Open in Google Earth",
-                "Would you like to open the KML file in Google Earth?"
+                "Abrir en Google Earth",
+                "¿Desea abrir el fichero KML en Google Earth?"
         ):
             try:
                 os.startfile(filename)
             except Exception as e:
                 messagebox.showerror(
-                    "Open Failed",
-                    f"Could not open Google Earth:\n{str(e)}"
+                    "Error",
+                    f"No se ha podido abrir Google Earth:\n{str(e)}"
                 )
 
     except Exception as e:
         messagebox.showerror(
-            "Export Failed",
-            f"Error during KML export:\n{str(e)}"
+            "Fallo en la exportación",
+            f"Error al exportar a KML:\n{str(e)}"
         )
-
-
-# Add this button to your UI (place it near other buttons)
-ttk.Button(frame, text="Export to KML", command=Export_To_KML).grid(row=8, column=0, pady=5)
 
 # --- UI Layouts ---
 
@@ -351,14 +342,14 @@ def create_entry(label, parent, row):
     return entry
 
 
-# Example graphs
+# Graficos de ejemplo
 example_frame = ttk.LabelFrame(frame, text="Ejemplos", padding="10")
 example_frame.grid(row=0, column=0, columnspan=2, sticky="ew")
 ttk.Button(example_frame, text="Ejemplo 1", command=Mostrar_Grafo_Ejemplo).grid(row=0, column=0)
 ttk.Button(example_frame, text="Ejemplo 2", command=Mostrar_Grafo_Inventado).grid(row=0, column=1)
 ttk.Button(example_frame, text="Cargar archivo", command=Seleccionar_Archivo_Grafo).grid(row=0, column=2)
 
-# Add node
+# Añadir nodos
 node_frame = ttk.LabelFrame(frame, text="Agregar Nodo", padding="10")
 node_frame.grid(row=1, column=0, sticky="w")
 entry_nombre_nodo = create_entry("Nombre:", node_frame, 0)
@@ -366,35 +357,37 @@ entry_x = create_entry("X:", node_frame, 1)
 entry_y = create_entry("Y:", node_frame, 2)
 ttk.Button(node_frame, text="Agregar", command=Agregar_Nodo).grid(row=3, column=0, columnspan=2)
 
-# Add segment
+# Añadir segmentos
 segment_frame = ttk.LabelFrame(frame, text="Agregar Segmento", padding="10")
 segment_frame.grid(row=2, column=0, sticky="w")
 entry_origen = create_entry("Origen:", segment_frame, 0)
 entry_destino = create_entry("Destino:", segment_frame, 1)
 ttk.Button(segment_frame, text="Agregar", command=Agregar_Segmento).grid(row=2, column=0, columnspan=2)
 
-# Delete node
+# Borrar nodo
 delete_frame = ttk.LabelFrame(frame, text="Eliminar Nodo", padding="10")
 delete_frame.grid(row=3, column=0, sticky="w")
 entry_eliminar_nodo = create_entry("Nombre:", delete_frame, 0)
 ttk.Button(delete_frame, text="Eliminar", command=Eliminar_Nodo).grid(row=1, column=0, columnspan=2)
 
-# Plot graph
+# Dibujar grafo
 ttk.Button(frame, text="Mostrar Grafo Personalizado", command=Mostrar_Grafo_Custom).grid(row=4, column=0, pady=5)
 ttk.Button(frame, text="Guardar Grafo", command=Guardar_Grafo).grid(row=4, column=1)
 
-# Reachable nodes
+# Nodos alcanzables
 alcance_frame = ttk.LabelFrame(frame, text="Alcanzables", padding="10")
 alcance_frame.grid(row=5, column=0, sticky="w")
 entry_nodo_alcanzable = create_entry("Desde nodo:", alcance_frame, 0)
 ttk.Button(alcance_frame, text="Mostrar", command=Mostrar_Nodos_Alcanzables).grid(row=1, column=0, columnspan=2)
 
-# Shortest path
+# Camino mas corto
 camino_frame = ttk.LabelFrame(frame, text="Camino más corto", padding="10")
 camino_frame.grid(row=6, column=0, sticky="w")
 entry_camino_origen = create_entry("Origen:", camino_frame, 0)
 entry_camino_destino = create_entry("Destino:", camino_frame, 1)
-ttk.Button(camino_frame, text="Buscar", command=Encontrar_Camino_Mas_Corto).grid(row=2, column=0, columnspan=2)
+ttk.Button(camino_frame, text="Buscar", command=Camino_Mas_Corto).grid(row=2, column=0, columnspan=2)
 
+# Exportar a KML
+ttk.Button(frame, text="Exportar a KML", command=Exportar_a_KML).grid(row=8, column=0, pady=5)
 
 window.mainloop()
