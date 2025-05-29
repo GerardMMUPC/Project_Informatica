@@ -3,6 +3,7 @@ from tkinter import ttk, filedialog, messagebox
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from Graph import Grafico_fichero, Plot, Añadir_nodo, Añadir_segmento, Graph, Encontrar_camino_mas_corto, Encontrar_nodos_alcanzables, Plot_ratón
 from Node import Node
+from test_graph import Cargar_Mapa_Catalunya, Cargar_Mapa_España, Cargar_Mapa_ECAC
 import matplotlib.pyplot as plt
 from KML import generar_camino_kml
 import os
@@ -478,6 +479,130 @@ def Mostrar_Imagenes():
 
     img_window.image_refs = image_refs
 
+def Mostrar_Mapa_Aereo():
+    # Crear ventana de selección
+    selection_win = tk.Toplevel(window)
+    selection_win.title("Seleccionar Mapa Aéreo")
+    selection_win.geometry("300x150")
+
+    # Definir las funciones de carga primero
+    def cargar_catalunya():
+        try:
+            graph = Cargar_Mapa_Catalunya()
+            mostrar_mapa(graph, "Mapa Aéreo de Catalunya")
+        except Exception as e:
+            messagebox.showerror("Error", f"Error al cargar mapa: {str(e)}")
+        finally:
+            selection_win.destroy()
+
+    def cargar_espana():
+        try:
+            graph = Cargar_Mapa_España()
+            mostrar_mapa(graph, "Mapa Aéreo de España")
+        except Exception as e:
+            messagebox.showerror("Error", f"Error al cargar mapa: {str(e)}")
+        finally:
+            selection_win.destroy()
+
+    def cargar_ecac():
+        try:
+            graph = Cargar_Mapa_ECAC()
+            mostrar_mapa(graph, "Mapa Aéreo ECAC")
+        except Exception as e:
+            messagebox.showerror("Error", f"Error al cargar mapa: {str(e)}")
+        finally:
+            selection_win.destroy()
+
+    # Función auxiliar para mostrar el mapa
+    def mostrar_mapa(graph, title):
+        if graph and graph.nodes:
+            custom_graph.nodes = graph.nodes
+            custom_graph.segments = graph.segments
+            custom_graph.airport_nodes = getattr(graph, 'airport_nodes', set())
+            fig = Plot(custom_graph, title=title, airport_nodes=custom_graph.airport_nodes)
+            embed_plot(fig)
+        else:
+            messagebox.showerror("Error", "No se pudo cargar el mapa seleccionado.")
+
+    # Crear botones
+    ttk.Button(selection_win, text="Catalunya", command=cargar_catalunya).pack(pady=10)
+    ttk.Button(selection_win, text="España", command=cargar_espana).pack(pady=10)
+    ttk.Button(selection_win, text="ECAC", command=cargar_ecac).pack(pady=10)
+
+def Export_To_KML():
+    if not hasattr(custom_graph, 'nodes') or not custom_graph.nodes:
+        messagebox.showwarning("Advertencia", "No hay datos a exportar")
+        return
+
+    export_choice = messagebox.askquestion(
+        "Opciones de exportación",
+        "¿Exportar todo el grafo? (Si para todos los nodos, No para el camino actual)",
+        icon='question'
+    )
+
+    filename = filedialog.asksaveasfilename(
+        defaultextension=".kml",
+        filetypes=[("KML Files", "*.kml")],
+        title="Guardar fichero KML"
+    )
+    if not filename:
+        return
+
+    try:
+        if export_choice == 'yes':
+            generar_camino_kml(custom_graph.nodes, filename)
+            messagebox.showinfo(
+                "Exito",
+                f"Exportado {len(custom_graph.nodes)} nodos a:\n{filename}"
+            )
+        else:
+            if hasattr(custom_graph, 'shortest_path') and custom_graph.shortest_path:
+                generar_camino_kml(custom_graph.shortest_path.nodes, filename)
+                messagebox.showinfo(
+                    "Exito",
+                    f"Exportado el camino ({len(custom_graph.shortest_path.nodes)} points) a:\n{filename}"
+                )
+            else:
+                messagebox.showwarning(
+                    "No hay ningun camino",
+                    "Porfavor calcular un camino usando la funcion en la interfaz"
+                )
+                return
+
+        if messagebox.askyesno(
+                "Abrir en google earth",
+                "¿Abrir el fichero en Google earth?"
+        ):
+            try:
+                os.startfile(filename)
+            except Exception as e:
+                messagebox.showerror(
+                    "Error",
+                    f"No se pudo abrir en Google Earth:\n{str(e)}"
+                )
+
+    except Exception as e:
+        messagebox.showerror(
+            "Error exportación",
+            f"Error durante exportación a KML:\n{str(e)}"
+        )
+
+# --- UI Layouts ---
+
+def create_entry(label, parent, row):
+    ttk.Label(parent, text=label).grid(row=row, column=0, sticky="w")
+    entry = ttk.Entry(parent)
+    entry.grid(row=row, column=1)
+    return entry
+
+
+# Graficos de ejemplo
+example_frame = ttk.LabelFrame(frame, text="Ejemplos", padding="10")
+example_frame.grid(row=0, column=0, columnspan=2, sticky="ew")
+ttk.Button(example_frame, text="Ejemplo 1", command=Mostrar_Grafo_Ejemplo).grid(row=0, column=0)
+ttk.Button(example_frame, text="Ejemplo 2", command=Mostrar_Grafo_Inventado).grid(row=0, column=1)
+ttk.Button(example_frame, text="Cargar archivo", command=Seleccionar_Archivo_Grafo).grid(row=0, column=2)
+
 
 # --- UI Layouts ---
 
@@ -536,6 +661,8 @@ ttk.Button(frame,
 boton = ttk.Button(window, text="Mostrar Imágenes del Grupo", command=Mostrar_Imagenes)
 boton.grid(row=1, column=0, padx=20, pady=20)
 
+#Abrir mapas esp,cat,ecac
+ttk.Button(example_frame, text="Mapas Aéreos", command=Mostrar_Mapa_Aereo).grid(row=0, column=3, padx=5)
 
 def cerrar_programa():
     window.destroy()
