@@ -455,8 +455,7 @@ def Mostrar_Imagenes():
     img_window.title("Imágenes de personas")
 
     image_paths = [
-        "C:/Users/polso/OneDrive/Imágenes/Saved Pictures/IMG-20250528-WA0011.jpg", "C:/Users/polso/OneDrive/Imágenes/Saved Pictures/Screenshot_20250528_200036_Gallery.jpg",
-        "C:/Users/polso/OneDrive/Imágenes/Saved Pictures/IMG_1755.jpg", "C:/Users/polso/OneDrive/Imágenes/Saved Pictures/20250528_195800.jpg"
+        "Pol.S.foto.jpg", "Pol.R_foto.jpg", "Laia.foto.jpg", "Gerard.Mfoto.jpg"
 
     ]
 
@@ -587,7 +586,6 @@ def Export_To_KML():
             f"Error durante exportación a KML:\n{str(e)}"
         )
 
-# --- UI Layouts ---
 
 def create_entry(label, parent, row):
     ttk.Label(parent, text=label).grid(row=row, column=0, sticky="w")
@@ -595,6 +593,39 @@ def create_entry(label, parent, row):
     entry.grid(row=row, column=1)
     return entry
 
+def funcionalidades():
+    # Crear ventana emergente
+    func_window = tk.Toplevel(window)
+    func_window.title("Nuevas Funcionalidades")
+    func_window.geometry("600x400")
+
+    # Frame principal con scrollbar
+    main_frame = ttk.Frame(func_window)
+    main_frame.pack(fill='both', expand=True, padx=10, pady=10)
+
+    # Texto con las funcionalidades
+    text_func = tk.Text(main_frame, wrap='word', font=('Helvetica', 10))
+    scrollbar = ttk.Scrollbar(main_frame, command=text_func.yview)
+    text_func.configure(yscrollcommand=scrollbar.set)
+
+    scrollbar.pack(side='right', fill='y')
+    text_func.pack(fill='both', expand=True)
+
+    # Contenido explicativo
+    contenido = """
+NO TE VAYAS SIN REVISAR NUESTRAS NUEVAS FUNCIONALIDADES!
+1.Reset zoom: Resetea el zoom a su estado inicial
+2.Ver navpoints sobrevolados al realizar un recorrido
+3.Los nodos representando aeropuertos son azules
+4.Se puede hacer zoom con la rueda del raton
+"""
+
+    text_func.insert('end', contenido)
+    text_func.config(state='disabled')  # Hacer el texto de solo lectura
+
+    ttk.Button(func_window, text="Cerrar", command=func_window.destroy).pack(pady=10)
+
+# --- UI Layouts ---
 
 # Graficos de ejemplo
 example_frame = ttk.LabelFrame(frame, text="Ejemplos", padding="10")
@@ -635,7 +666,7 @@ entry_eliminar_nodo = create_entry("Nombre:", delete_frame, 0)
 ttk.Button(delete_frame, text="Eliminar", command=Eliminar_Nodo).grid(row=1, column=0, columnspan=2)
 
 # Dibujar grafo
-ttk.Button(frame, text="Mostrar Grafo Personalizado", command=Mostrar_Grafo_Custom).grid(row=4, column=0, pady=5)
+ttk.Button(frame, text="Mostrar Grafo Personalizado", command=Mostrar_Grafo_Custom).grid(row=1, column=1, pady=5)
 ttk.Button(frame, text="Guardar Grafo", command=Guardar_Grafo).grid(row=4, column=1)
 
 # Nodos alcanzables
@@ -659,10 +690,13 @@ ttk.Button(frame,
           command=Mostrar_Navpoints_Sobrevolar,
           style='Common.TButton').grid(row=9, column=0, pady=5)
 boton = ttk.Button(window, text="Mostrar Imágenes del Grupo", command=Mostrar_Imagenes)
-boton.grid(row=1, column=0, padx=20, pady=20)
+boton.grid(row=1, column=0, padx=5, pady=5)
 
 #Abrir mapas esp,cat,ecac
 ttk.Button(example_frame, text="Mapas Aéreos", command=Mostrar_Mapa_Aereo).grid(row=0, column=3, padx=5)
+
+#Explicación funcionalidades
+ttk.Button(example_frame, text="Nuevas funcionalidades", command=funcionalidades).grid(row=0, column=4, padx=5)
 
 def cerrar_programa():
     window.destroy()
